@@ -1,25 +1,4 @@
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: zanlytics-ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   backend:
     build: ./backend
     container_name: zanlytics-backend
@@ -28,39 +7,33 @@ services:
     volumes:
       - ./backend/data:/app/data
     environment:
-      - OLLAMA_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen2.5:14b
-      - EMBED_MODEL=nomic-embed-text
-      - DATABASE_URL=sqlite:///data/zandb.sqlite
-      - CHROMA_PERSIST_DIR=/app/data/chroma
-    depends_on:
-      ollama:
-        condition: service_healthy
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+      - ZAN_OLLAMA_URL=http://host.docker.internal:11434
+      - ZAN_OLLAMA_MODEL=qwen2.5:14b
+      - ZAN_OLLAMA_EMBED_MODEL=nomic-embed-text
+      - ZAN_DB_PATH=data/zandb.sqlite
+      - ZAN_CHROMA_PATH=data/chroma
+      - ZAN_RAW_HTML_PATH=data/raw_html
+      - ZAN_CORS_ORIGINS=["http://localhost:3100"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health').raise_for_status()"]
       interval: 30s
       timeout: 10s
       retries: 3
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
     container_name: zanlytics-frontend
     ports:
-      - "3100:3000"
+      - "3100:3100"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - PORT=3100
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
-
-volumes:
-  ollama_data:

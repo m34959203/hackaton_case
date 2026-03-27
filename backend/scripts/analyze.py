@@ -106,7 +106,14 @@ async def run_pipeline() -> None:
     logger.info("[1/6] Эмбеддинг норм...")
 
     embedder = NormEmbedder()
-    await embedder.embed_all()
+    # Проверяем: если ChromaDB уже содержит все нормы — пропускаем
+    from app.database import get_chroma_collection
+    existing_count = get_chroma_collection("norms").count()
+    if existing_count >= norms_count:
+        logger.info("ChromaDB уже содержит %d эмбеддингов, пропускаем", existing_count)
+    else:
+        logger.info("ChromaDB: %d из %d, нужно доэмбеддить", existing_count, norms_count)
+        await embedder.embed_all()
 
     logger.info("[1/6] Эмбеддинг завершён за %.1f сек", time.time() - stage_start)
 
