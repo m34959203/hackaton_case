@@ -52,13 +52,10 @@ export function getModels(): Promise<ModelsResponse> {
   return apiFetch<ModelsResponse>("/api/models");
 }
 
-export function setModel(
-  provider: string,
-  model: string,
-): Promise<{ status: string; provider: string; model: string }> {
+export function setModel(model: string): Promise<{ status: string; model: string }> {
   return apiFetch("/api/models", {
     method: "POST",
-    body: JSON.stringify({ provider, model }),
+    body: JSON.stringify({ model }),
   });
 }
 
