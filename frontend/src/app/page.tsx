@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { getStats } from "@/lib/api";
 
+import { Button } from "@/components/ui/button";
 import StatsCards from "@/components/dashboard/StatsCards";
 import FindingsByTypeChart from "@/components/dashboard/FindingsByTypeChart";
 import DomainChart from "@/components/dashboard/DomainChart";
@@ -74,7 +75,7 @@ function DashboardSkeleton() {
 }
 
 export default function DashboardPage() {
-  const { data: stats, isLoading, error } = useQuery({
+  const { data: stats, isLoading, error, refetch } = useQuery({
     queryKey: ["stats"],
     queryFn: getStats,
     retry: false,
@@ -102,6 +103,9 @@ export default function DashboardPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Убедитесь, что backend запущен на порту 8001
             </p>
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
+              Повторить
+            </Button>
           </CardContent>
         </Card>
       )}

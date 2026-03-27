@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { GraphNode, GraphLink } from "@/lib/types";
+import { typeLabel } from "@/lib/utils";
+import Link from "next/link";
 
 interface GraphNodeInfoProps {
   node: GraphNode | null;
@@ -46,31 +48,74 @@ export default function GraphNodeInfo({ node, link, onClose }: GraphNodeInfoProp
               <p className="text-sm font-medium text-foreground leading-snug">
                 {node.name}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {node.group && (
                   <Badge variant="outline">
                     {GROUP_LABELS[node.group] ?? node.group}
                   </Badge>
                 )}
-                <span className="text-xs text-muted-foreground">
-                  Размер: {node.val}
-                </span>
+                {node.status && (
+                  <Badge variant={node.status === "active" ? "secondary" : "outline"}>
+                    {typeLabel(node.status)}
+                  </Badge>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">ID: {node.id}</p>
+              {node.domain && (
+                <p className="text-xs text-muted-foreground">
+                  {node.domain}
+                </p>
+              )}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Норм:</span>{" "}
+                  <span className="font-medium">{node.val}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Обнаружений:</span>{" "}
+                  <span className={node.findingsCount > 0 ? "font-medium text-red-400" : "font-medium"}>
+                    {node.findingsCount}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground font-mono">
+                ID: {node.id}
+              </p>
+              <Link
+                href={`/documents/${encodeURIComponent(node.id)}`}
+                className="inline-block text-xs text-blue-400 hover:underline mt-1"
+              >
+                Открыть документ
+              </Link>
             </>
           )}
           {link && (
             <>
-              <p className="text-sm text-foreground">
-                <span className="font-medium">Источник:</span> {String(link.source)}
-              </p>
-              <p className="text-sm text-foreground">
-                <span className="font-medium">Цель:</span> {String(link.target)}
-              </p>
-              {link.type && (
-                <Badge variant="outline">
-                  {LINK_TYPE_LABELS[link.type] ?? link.type}
-                </Badge>
+              <div className="space-y-1">
+                <p className="text-sm text-foreground">
+                  <span className="font-medium">Источник:</span>{" "}
+                  <span className="text-xs font-mono">{String(link.source)}</span>
+                </p>
+                <p className="text-sm text-foreground">
+                  <span className="font-medium">Цель:</span>{" "}
+                  <span className="text-xs font-mono">{String(link.target)}</span>
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {link.type && (
+                  <Badge variant="outline">
+                    {LINK_TYPE_LABELS[link.type] ?? link.type}
+                  </Badge>
+                )}
+                {link.label && (
+                  <span className="text-xs text-muted-foreground">
+                    {link.label}
+                  </span>
+                )}
+              </div>
+              {link.value > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Вес: {link.value}
+                </p>
               )}
             </>
           )}

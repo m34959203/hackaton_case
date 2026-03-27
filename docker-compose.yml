@@ -13,7 +13,7 @@ services:
       - ZAN_DB_PATH=data/zandb.sqlite
       - ZAN_CHROMA_PATH=data/chroma
       - ZAN_RAW_HTML_PATH=data/raw_html
-      - ZAN_CORS_ORIGINS=["http://localhost:3100"]
+      - ZAN_CORS_ORIGINS=["http://localhost:3100","http://localhost:3300","http://100.118.110.5:3100"]
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -21,7 +21,8 @@ services:
       test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/api/health').raise_for_status()"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 15s
 
   frontend:
     build:
@@ -33,7 +34,14 @@ services:
       - "3100:3100"
     environment:
       - PORT=3100
+      - HOSTNAME=0.0.0.0
     depends_on:
       backend:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3100/", "||", "exit", "1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

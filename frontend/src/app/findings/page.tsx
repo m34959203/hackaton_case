@@ -15,7 +15,7 @@ export default function FindingsPage() {
   const [severity, setSeverity] = useState("");
   const limit = 20;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["findings", page, type, severity],
     queryFn: () =>
       getFindings({
@@ -24,6 +24,7 @@ export default function FindingsPage() {
         type: type || undefined,
         severity: severity || undefined,
       }),
+    retry: false,
   });
 
   const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
@@ -57,6 +58,18 @@ export default function FindingsPage() {
         onReset={handleReset}
       />
 
+      {error && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground">Не удалось загрузить обнаружения</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+              Повторить
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!error && (
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">
@@ -75,6 +88,7 @@ export default function FindingsPage() {
           />
         </CardContent>
       </Card>
+      )}
 
       {/* Пагинация */}
       {totalPages > 1 && (

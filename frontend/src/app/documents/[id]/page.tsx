@@ -28,9 +28,10 @@ export default function DocumentDetailPage({
   const decodedId = decodeURIComponent(id);
   const router = useRouter();
 
-  const { data: doc, isLoading: docLoading } = useQuery({
+  const { data: doc, isLoading: docLoading, error: docError, refetch: refetchDoc } = useQuery({
     queryKey: ["document", decodedId],
     queryFn: () => getDocument(decodedId),
+    retry: false,
   });
 
   const { data: findingsData } = useQuery({
@@ -67,6 +68,17 @@ export default function DocumentDetailPage({
         <Skeleton className="h-8 w-96" />
         <Skeleton className="h-48" />
         <Skeleton className="h-64" />
+      </div>
+    );
+  }
+
+  if (docError) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-3">
+        <p className="text-muted-foreground">Не удалось загрузить документ</p>
+        <Button variant="outline" size="sm" onClick={() => refetchDoc()}>
+          Повторить
+        </Button>
       </div>
     );
   }

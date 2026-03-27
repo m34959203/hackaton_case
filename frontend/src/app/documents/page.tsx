@@ -34,7 +34,7 @@ export default function DocumentsPage() {
   const [status, setStatus] = useState("");
   const limit = 20;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["documents", page, domain, docType, status],
     queryFn: () =>
       getDocuments({
@@ -44,6 +44,7 @@ export default function DocumentsPage() {
         docType: docType || undefined,
         status: status || undefined,
       }),
+    retry: false,
   });
 
   const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
@@ -110,7 +111,20 @@ export default function DocumentsPage() {
         )}
       </div>
 
+      {/* Ошибка */}
+      {error && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-muted-foreground">Не удалось загрузить документы</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+              Повторить
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Таблица */}
+      {!error && (
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm">
@@ -189,6 +203,7 @@ export default function DocumentsPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
       {/* Пагинация */}
       {totalPages > 1 && (

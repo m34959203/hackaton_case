@@ -1,51 +1,68 @@
-.PHONY: setup dev scrape embed analyze demo test lint format clean
+.PHONY: setup dev docker scrape analyze embed clean lint format test stop logs
 
-# First-time setup: pull models, scrape, embed, analyze
-setup:
-	docker exec ollama ollama pull qwen2.5:14b
-	docker exec ollama ollama pull nomic-embed-text
-	docker exec backend python -m scripts.scrape --all
-	docker exec backend python -m scripts.process --embed --cluster
-	docker exec backend python -m scripts.analyze --all
+# ============================================================
+# ZanAlytics — Makefile
+# ============================================================
 
-# Start all services for development
+# --- Первый запуск: парсинг + анализ ---
+setup: scrape analyze
+	@echo "=== Setup complete ==="
+
+# --- Локальная разработка (без Docker) ---
 dev:
-	docker compose up -d
+	@echo "=== Starting backend (port 8000) and frontend (port 3300) ==="
+	cd backend && python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload &
+	cd frontend && npm run dev &
+	@echo "Backend: http://localhost:8001  |  Frontend: http://localhost:3300"
+	@wait
 
-# Scrape documents from adilet.zan.kz
+# --- Docker: сборка и запуск ---
+docker:
+	docker compose build
+	docker compose up -d
+	@echo "=== Docker containers started ==="
+	@echo "Backend:  http://localhost:8000"
+	@echo "Frontend: http://localhost:3100"
+
+# --- Парсинг документов с adilet.zan.kz ---
 scrape:
-	cd backend && python -m scripts.scrape --all
+	cd backend && python -m scripts.scrape
 
-# Generate embeddings and clusters
-embed:
-	cd backend && python -m scripts.process --embed --cluster
-
-# Run analysis pipeline
+# --- Полный анализ (эмбеддинги + кластеризация + выявление проблем) ---
 analyze:
-	cd backend && python -m scripts.analyze --all
+	cd backend && python -m scripts.analyze
 
-# Load demo data and start
-demo:
-	docker compose up -d
-	docker exec backend python -m scripts.load_demo
+# --- Только эмбеддинги и кластеризация ---
+embed:
+	cd backend && python -m scripts.analyze
 
-# Run tests
-test:
-	cd backend && pytest tests/ -v
-	cd frontend && npm run test
+# --- Остановка Docker контейнеров ---
+stop:
+	docker compose down
 
-# Lint code
+# --- Логи Docker ---
+logs:
+	docker compose logs -f
+
+# --- Линтинг ---
 lint:
 	cd backend && ruff check .
 	cd frontend && npm run lint
 
-# Format code
+# --- Форматирование ---
 format:
 	cd backend && ruff format .
 	cd frontend && npx prettier --write "src/**/*.{ts,tsx}"
 
-# Clean generated data
+# --- Тесты ---
+test:
+	cd backend && pytest tests/ -v
+
+# --- Очистка данных ---
 clean:
-	rm -rf backend/data/
+	rm -rf backend/data/chroma
+	rm -rf backend/data/raw_html
+	rm -f backend/data/zandb.sqlite
+	rm -f backend/data/graph.json
 	rm -rf frontend/.next/
-	rm -rf frontend/node_modules/
+	@echo "=== Data cleaned ==="

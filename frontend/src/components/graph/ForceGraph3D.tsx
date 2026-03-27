@@ -4,10 +4,11 @@ import { useCallback, useState, useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
 import { getGraph } from "@/lib/api";
-import type { GraphNode, GraphLink, GraphData } from "@/lib/types";
+import type { GraphNode, GraphLink } from "@/lib/types";
 import GraphControls from "./GraphControls";
 import GraphNodeInfo from "./GraphNodeInfo";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 /* Динамический импорт (Three.js не работает в SSR) */
 const ForceGraph = dynamic(() => import("react-force-graph-3d"), {
@@ -45,7 +46,7 @@ export default function ForceGraph3DView() {
   });
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
 
-  const { data: rawGraph, isLoading, error } = useQuery({
+  const { data: rawGraph, isLoading, error, refetch } = useQuery({
     queryKey: ["graph"],
     queryFn: getGraph,
     retry: false,
@@ -122,9 +123,14 @@ export default function ForceGraph3DView() {
   if (error) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-muted-foreground">
-          Ошибка загрузки графа. Убедитесь, что backend запущен.
-        </p>
+        <div className="text-center space-y-3">
+          <p className="text-muted-foreground">
+            Ошибка загрузки графа. Убедитесь, что backend запущен.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Повторить
+          </Button>
+        </div>
       </div>
     );
   }

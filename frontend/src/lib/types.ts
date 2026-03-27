@@ -85,6 +85,9 @@ export interface GraphNode {
   group: string | null;
   val: number;
   color: string | null;
+  findingsCount: number;
+  domain: string | null;
+  status: string | null;
 }
 
 export interface GraphLink {
@@ -93,6 +96,7 @@ export interface GraphLink {
   type: string | null;
   color: string | null;
   value: number;
+  label: string | null;
 }
 
 export interface GraphData {

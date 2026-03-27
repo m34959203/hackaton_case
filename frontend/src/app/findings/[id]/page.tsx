@@ -23,9 +23,10 @@ export default function FindingDetailPage({
   const router = useRouter();
   const [reported, setReported] = useState(false);
 
-  const { data: finding, isLoading } = useQuery({
+  const { data: finding, isLoading, error, refetch } = useQuery({
     queryKey: ["finding", id],
     queryFn: () => getFinding(Number(id)),
+    retry: false,
   });
 
   if (isLoading) {
@@ -37,6 +38,17 @@ export default function FindingDetailPage({
           <Skeleton className="h-48" />
         </div>
         <Skeleton className="h-32" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-64 flex-col items-center justify-center gap-3">
+        <p className="text-muted-foreground">Не удалось загрузить обнаружение</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Повторить
+        </Button>
       </div>
     );
   }
