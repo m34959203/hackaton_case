@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { NormBrief } from "@/lib/types";
 
 interface NormComparisonProps {
-  normA: NormBrief;
-  normB: NormBrief | null;
+  norm_a: NormBrief;
+  norm_b: NormBrief | null;
   type: string;
 }
 
@@ -13,7 +13,7 @@ interface NormComparisonProps {
  * Сравнение двух норм бок о бок.
  * Для outdated-типа отображается только одна норма.
  */
-export default function NormComparison({ normA, normB, type }: NormComparisonProps) {
+export default function NormComparison({ norm_a: normA, norm_b: normB, type }: NormComparisonProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {/* Норма A */}
@@ -23,7 +23,7 @@ export default function NormComparison({ normA, normB, type }: NormComparisonPro
             Норма A
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Документ: {normA.docId} | Статья {normA.article}
+            Документ: {normA.doc_id} | Статья {normA.article}
             {normA.paragraph ? `, п. ${normA.paragraph}` : ""}
           </p>
         </CardHeader>
@@ -42,7 +42,7 @@ export default function NormComparison({ normA, normB, type }: NormComparisonPro
               Норма B
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Документ: {normB.docId} | Статья {normB.article}
+              Документ: {normB.doc_id} | Статья {normB.article}
               {normB.paragraph ? `, п. ${normB.paragraph}` : ""}
             </p>
           </CardHeader>

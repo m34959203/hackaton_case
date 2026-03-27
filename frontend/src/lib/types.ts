@@ -1,6 +1,6 @@
 /**
  * TypeScript-интерфейсы для ZanAlytics.
- * Соответствуют Pydantic-моделям backend (snake_case → camelCase).
+ * Поля совпадают с backend API (snake_case).
  */
 
 /* ───────── Документы и нормы ───────── */
@@ -8,31 +8,31 @@
 export interface Document {
   id: string;
   title: string;
-  docType: string;
-  dateAdopted: string | null;
-  dateAmended: string | null;
+  doc_type: string;
+  date_adopted: string | null;
+  date_amended: string | null;
   status: string;
   domain: string | null;
-  adoptingBody: string | null;
-  legalForce: string | null;
-  normsCount: number;
-  findingsCount: number;
+  adopting_body: string | null;
+  legal_force: string | null;
+  norms_count: number;
+  findings_count: number;
 }
 
 export interface Norm {
   id: string;
-  docId: string;
+  doc_id: string;
   article: number;
   paragraph: number | null;
   text: string;
-  clusterId: number | null;
-  clusterTopic: string | null;
-  findingsCount: number;
+  cluster_id: number | null;
+  cluster_topic: string | null;
+  findings_count: number;
 }
 
 export interface NormBrief {
   id: string;
-  docId: string;
+  doc_id: string;
   article: number;
   paragraph: number | null;
   text: string;
@@ -44,9 +44,9 @@ export interface DocumentDetail extends Document {
 
 export interface CrossRef {
   id: number;
-  fromDoc: string;
-  toDoc: string;
-  contextText: string | null;
+  from_doc: string;
+  to_doc: string;
+  context_text: string | null;
 }
 
 /* ───────── Обнаружения ───────── */
@@ -56,11 +56,11 @@ export interface Finding {
   type: "contradiction" | "duplication" | "outdated";
   severity: "high" | "medium" | "low";
   confidence: number;
-  normA: NormBrief;
-  normB: NormBrief | null;
+  norm_a: NormBrief;
+  norm_b: NormBrief | null;
   explanation: string;
-  clusterTopic: string | null;
-  createdAt: string | null;
+  cluster_topic: string | null;
+  created_at: string | null;
 }
 
 export interface FindingDetail {
@@ -68,13 +68,13 @@ export interface FindingDetail {
   type: "contradiction" | "duplication" | "outdated";
   severity: "high" | "medium" | "low";
   confidence: number;
-  normA: NormBrief;
-  normB: NormBrief | null;
+  norm_a: NormBrief;
+  norm_b: NormBrief | null;
   explanation: string;
   recommendation: string | null;
-  clusterId: number | null;
-  clusterTopic: string | null;
-  createdAt: string | null;
+  cluster_id: number | null;
+  cluster_topic: string | null;
+  created_at: string | null;
 }
 
 /* ───────── Граф ───────── */
@@ -104,9 +104,9 @@ export interface GraphData {
 
 export interface DomainStat {
   domain: string;
-  docsCount: number;
-  normsCount: number;
-  findingsCount: number;
+  docs_count: number;
+  norms_count: number;
+  findings_count: number;
 }
 
 export interface FindingTypeStat {
@@ -120,12 +120,12 @@ export interface FindingSeverityStat {
 }
 
 export interface StatsResponse {
-  totalDocuments: number;
-  totalNorms: number;
-  totalFindings: number;
-  findingsByType: FindingTypeStat[];
-  findingsBySeverity: FindingSeverityStat[];
-  topDomains: DomainStat[];
+  total_documents: number;
+  total_norms: number;
+  total_findings: number;
+  findings_by_type: FindingTypeStat[];
+  findings_by_severity: FindingSeverityStat[];
+  top_domains: DomainStat[];
 }
 
 export interface ServiceStatus {
@@ -146,7 +146,6 @@ export interface PaginatedResponse<T> {
   total: number;
   page: number;
   limit: number;
-  pages: number;
 }
 
 /* ───────── SSE-события анализа ───────── */
@@ -163,7 +162,7 @@ export interface AnalysisProgressData {
 }
 
 export interface AnalysisCompleteData {
-  findingsCount: number;
+  findings_count: number;
   message: string;
 }
 

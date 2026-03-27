@@ -29,14 +29,14 @@ export default function FindingCard({ finding }: FindingCardProps) {
           <p className="line-clamp-2 text-sm">{finding.explanation}</p>
           <div className="flex gap-4 text-xs text-muted-foreground">
             <span>
-              Норма A: ст. {finding.normA.article}
-              {finding.normA.paragraph ? `, п. ${finding.normA.paragraph}` : ""}
+              Норма A: ст. {finding.norm_a.article}
+              {finding.norm_a.paragraph ? `, п. ${finding.norm_a.paragraph}` : ""}
             </span>
-            {finding.normB && (
+            {finding.norm_b && (
               <span>
-                Норма B: ст. {finding.normB.article}
-                {finding.normB.paragraph
-                  ? `, п. ${finding.normB.paragraph}`
+                Норма B: ст. {finding.norm_b.article}
+                {finding.norm_b.paragraph
+                  ? `, п. ${finding.norm_b.paragraph}`
                   : ""}
               </span>
             )}

@@ -21,13 +21,16 @@ _GRAPH_CACHE = Path(settings.DB_PATH).parent / "graph.json"
 
 
 class GraphNode(BaseModel):
-    """Узел графа (документ или норма)."""
+    """Узел графа (документ)."""
 
     id: str
     name: str
     group: str | None = None
     val: float = 1.0
     color: str | None = None
+    findingsCount: int = 0
+    domain: str | None = None
+    status: str | None = None
 
 
 class GraphLink(BaseModel):
@@ -38,6 +41,7 @@ class GraphLink(BaseModel):
     type: str | None = None
     color: str | None = None
     value: float = 1.0
+    label: str | None = None
 
 
 class GraphResponse(BaseModel):

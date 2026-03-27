@@ -46,7 +46,7 @@ export default function DocumentsPage() {
       }),
   });
 
-  const totalPages = data?.pages ?? 1;
+  const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
   const hasFilters = domain !== "" || docType !== "" || status !== "";
 
   const handleReset = () => {
@@ -156,8 +156,8 @@ export default function DocumentsPage() {
                       {doc.title}
                     </TableCell>
                     <TableCell>
-                      <Badge className={typeColor(doc.docType)}>
-                        {typeLabel(doc.docType)}
+                      <Badge className={typeColor(doc.doc_type)}>
+                        {typeLabel(doc.doc_type)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -171,12 +171,12 @@ export default function DocumentsPage() {
                       {doc.domain ?? "--"}
                     </TableCell>
                     <TableCell className="text-center text-sm">
-                      {doc.normsCount}
+                      {doc.norms_count}
                     </TableCell>
                     <TableCell className="text-center text-sm">
-                      {doc.findingsCount > 0 ? (
+                      {doc.findings_count > 0 ? (
                         <span className="font-medium text-red-400">
-                          {doc.findingsCount}
+                          {doc.findings_count}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">0</span>

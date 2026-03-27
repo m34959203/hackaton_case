@@ -25,13 +25,13 @@ function DashboardContent({ stats }: { stats: StatsResponse }) {
 
       {/* Графики: тип + серьёзность */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FindingsByTypeChart data={stats.findingsByType} />
-        <SeverityChart data={stats.findingsBySeverity} />
+        <FindingsByTypeChart data={stats.findings_by_type} />
+        <SeverityChart data={stats.findings_by_severity} />
       </div>
 
       {/* Домены */}
       <div className="mt-4">
-        <DomainChart data={stats.topDomains} />
+        <DomainChart data={stats.top_domains} />
       </div>
 
       <Separator className="my-4" />

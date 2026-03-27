@@ -22,8 +22,8 @@ export default function DomainChart({ data }: DomainChartProps) {
   const chartData = data.slice(0, 10).map((d) => ({
     domain: d.domain.length > 40 ? d.domain.slice(0, 37) + "..." : d.domain,
     fullDomain: d.domain,
-    findings: d.findingsCount,
-    norms: d.normsCount,
+    findings: d.findings_count,
+    norms: d.norms_count,
   }));
 
   if (chartData.length === 0) {

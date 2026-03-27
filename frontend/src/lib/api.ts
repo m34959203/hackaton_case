@@ -21,35 +21,13 @@ const API_BASE =
 /* ───────── Утилиты ───────── */
 
 /**
- * Рекурсивно преобразует ключи объекта из snake_case в camelCase.
- */
-function snakeToCamel(str: string): string {
-  return str.replace(/_([a-z])/g, (_, letter: string) =>
-    letter.toUpperCase(),
-  );
-}
-
-function transformKeys<T>(obj: unknown): T {
-  if (Array.isArray(obj)) {
-    return obj.map((item) => transformKeys(item)) as T;
-  }
-  if (obj !== null && typeof obj === "object") {
-    const result: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
-      result[snakeToCamel(key)] = transformKeys(value);
-    }
-    return result as T;
-  }
-  return obj as T;
-}
-
-/**
- * Универсальный fetch-обёртка с преобразованием ключей.
+ * Универсальный fetch-обёртка. Данные возвращаются как есть (snake_case).
  */
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
   const response = await fetch(url, {
     ...init,
+    redirect: "follow",
     headers: {
       "Content-Type": "application/json",
       ...init?.headers,
@@ -64,7 +42,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   const json: unknown = await response.json();
-  return transformKeys<T>(json);
+  return json as T;
 }
 
 /* ───────── Статистика ───────── */
@@ -144,7 +122,7 @@ export function getFinding(id: number): Promise<FindingDetail> {
 /* ───────── Граф ───────── */
 
 export function getGraph(): Promise<GraphData> {
-  return apiFetch<GraphData>("/api/graph");
+  return apiFetch<GraphData>("/api/graph/");
 }
 
 /* ───────── Поиск ───────── */
@@ -237,7 +215,7 @@ export function analyzeText(
               const parsed: unknown = JSON.parse(eventData);
               onEvent({
                 event: eventType as AnalysisEvent["event"],
-                data: transformKeys(parsed),
+                data: parsed as AnalysisEvent["data"],
               });
             } catch {
               /* пропускаем невалидный JSON */

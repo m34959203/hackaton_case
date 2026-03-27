@@ -56,8 +56,8 @@ export default function DocumentDetailPage({
     if (!findingsData?.items || !decodedId) return [];
     return findingsData.items.filter(
       (f) =>
-        f.normA.docId === decodedId ||
-        (f.normB && f.normB.docId === decodedId),
+        f.norm_a.doc_id === decodedId ||
+        (f.norm_b && f.norm_b.doc_id === decodedId),
     );
   }, [findingsData, decodedId]);
 
@@ -94,8 +94,8 @@ export default function DocumentDetailPage({
           <h1 className="text-xl font-bold">{doc.title}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className={typeColor(doc.docType)}>
-            {typeLabel(doc.docType)}
+          <Badge className={typeColor(doc.doc_type)}>
+            {typeLabel(doc.doc_type)}
           </Badge>
           <Badge variant={doc.status === "active" ? "secondary" : "outline"}>
             {typeLabel(doc.status)}
@@ -121,28 +121,28 @@ export default function DocumentDetailPage({
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Дата принятия</span>
-              <p>{formatDate(doc.dateAdopted)}</p>
+              <p>{formatDate(doc.date_adopted)}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Дата изменения</span>
-              <p>{formatDate(doc.dateAmended)}</p>
+              <p>{formatDate(doc.date_amended)}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Принявший орган</span>
-              <p>{doc.adoptingBody ?? "--"}</p>
+              <p>{doc.adopting_body ?? "--"}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Юридическая сила</span>
-              <p>{doc.legalForce ?? "--"}</p>
+              <p>{doc.legal_force ?? "--"}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Норм</span>
-              <p>{doc.normsCount}</p>
+              <p>{doc.norms_count}</p>
             </div>
             <div>
               <span className="text-xs text-muted-foreground">Обнаружений</span>
-              <p className={doc.findingsCount > 0 ? "text-red-400 font-medium" : ""}>
-                {doc.findingsCount}
+              <p className={doc.findings_count > 0 ? "text-red-400 font-medium" : ""}>
+                {doc.findings_count}
               </p>
             </div>
           </div>

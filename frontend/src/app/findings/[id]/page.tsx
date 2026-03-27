@@ -73,14 +73,14 @@ export default function FindingDetailPage({
             <Badge className={severityColor(finding.severity)}>
               {typeLabel(finding.severity)}
             </Badge>
-            {finding.clusterTopic && (
+            {finding.cluster_topic && (
               <span className="text-xs text-muted-foreground">
-                Кластер: {finding.clusterTopic}
+                Кластер: {finding.cluster_topic}
               </span>
             )}
-            {finding.createdAt && (
+            {finding.created_at && (
               <span className="text-xs text-muted-foreground">
-                {formatDate(finding.createdAt)}
+                {formatDate(finding.created_at)}
               </span>
             )}
           </div>
@@ -100,8 +100,8 @@ export default function FindingDetailPage({
       <div>
         <h2 className="mb-3 text-lg font-semibold">Сравнение норм</h2>
         <NormComparison
-          normA={finding.normA}
-          normB={finding.normB}
+          norm_a={finding.norm_a}
+          norm_b={finding.norm_b}
           type={finding.type}
         />
       </div>

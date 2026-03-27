@@ -33,7 +33,11 @@ class Settings(BaseSettings):
 
     # API
     API_PAGE_SIZE: int = 20
-    CORS_ORIGINS: list[str] = ["http://localhost:3100"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3100",
+        "http://localhost:3300",
+        "http://100.118.110.5:3300",
+    ]
 
     model_config = {"env_prefix": "ZAN_"}
 

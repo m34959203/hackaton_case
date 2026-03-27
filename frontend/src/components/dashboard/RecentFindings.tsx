@@ -94,11 +94,11 @@ export default function RecentFindings() {
               <p className="text-sm text-foreground line-clamp-2">
                 {f.explanation}
               </p>
-              {f.normA && (
+              {f.norm_a && (
                 <p className="text-xs text-muted-foreground truncate">
-                  Ст. {f.normA.article}
-                  {f.normA.paragraph ? `, п. ${f.normA.paragraph}` : ""} —{" "}
-                  {f.normA.text.slice(0, 100)}...
+                  Ст. {f.norm_a.article}
+                  {f.norm_a.paragraph ? `, п. ${f.norm_a.paragraph}` : ""} —{" "}
+                  {f.norm_a.text.slice(0, 100)}...
                 </p>
               )}
             </div>

@@ -64,43 +64,59 @@ class GraphBuilder:
                 color=_NODE_COLORS.get(doc["doc_type"], "#6b7280"),
             )
 
-        # Добавляем рёбра из cross_refs
+        # Множество ID наших документов — только они становятся узлами
+        doc_ids = set(doc["id"] for doc in documents)
+
+        # Агрегируем cross_refs: считаем количество ссылок между парами наших документов
+        from collections import Counter
+        ref_counts: Counter = Counter()
         for ref in cross_refs:
             from_doc = ref["from_doc"]
             to_doc = ref["to_doc"]
+            # Пропускаем ссылки на/от внешних документов
+            if from_doc not in doc_ids or to_doc not in doc_ids:
+                continue
+            if from_doc == to_doc:
+                continue
+            pair = tuple(sorted([from_doc, to_doc]))
+            ref_counts[pair] += 1
 
-            # Добавляем узлы, если их нет (ссылки на внешние документы)
-            if from_doc not in self._graph:
-                self._graph.add_node(from_doc, title=from_doc, doc_type="unknown", color="#6b7280")
-            if to_doc not in self._graph:
-                self._graph.add_node(to_doc, title=to_doc, doc_type="unknown", color="#6b7280")
-
+        # Добавляем агрегированные рёбра ссылок (одно ребро на пару документов)
+        for (a, b), weight in ref_counts.items():
             self._graph.add_edge(
-                from_doc,
-                to_doc,
+                a, b,
                 type="reference",
                 color=_EDGE_COLORS["reference"],
-                context=ref.get("context_text", ""),
+                value=weight,
+                label=f"{weight} ссылок",
             )
 
-        # Добавляем рёбра из findings (contradiction, duplication)
+        # Агрегируем findings по парам документов и типу
+        finding_agg: dict[tuple, list] = {}
         for finding in findings:
             if not finding.get("doc_a") or not finding.get("doc_b"):
                 continue
             if finding["doc_a"] == finding["doc_b"]:
-                continue  # внутридокументные findings не добавляем как рёбра
+                continue
+            if finding["doc_a"] not in doc_ids or finding["doc_b"] not in doc_ids:
+                continue
 
             finding_type = finding["type"]
-            edge_key = f"{finding['type']}_{finding['id']}"
+            pair = tuple(sorted([finding["doc_a"], finding["doc_b"]]))
+            key = (pair[0], pair[1], finding_type)
+            if key not in finding_agg:
+                finding_agg[key] = []
+            finding_agg[key].append(finding)
 
+        # Добавляем рёбра из findings (одно ребро на тип на пару документов)
+        for (a, b, ftype), items in finding_agg.items():
             self._graph.add_edge(
-                finding["doc_a"],
-                finding["doc_b"],
-                key=edge_key,
-                type=finding_type,
-                color=_EDGE_COLORS.get(finding_type, "#6b7280"),
-                severity=finding["severity"],
-                finding_id=finding["id"],
+                a, b,
+                type=ftype,
+                color=_EDGE_COLORS.get(ftype, "#6b7280"),
+                value=len(items),
+                label=f"{len(items)} {ftype}",
+                severity=items[0]["severity"],  # берём severity первого
             )
 
         logger.info(
@@ -122,14 +138,13 @@ class GraphBuilder:
             nodes.append(
                 {
                     "id": node_id,
-                    "title": data.get("title", node_id),
-                    "doc_type": data.get("doc_type", "unknown"),
+                    "name": data.get("title", node_id),
+                    "group": data.get("doc_type", "unknown"),
                     "domain": data.get("domain", ""),
                     "status": data.get("status", ""),
-                    "findings_count": data.get("findings_count", 0),
-                    "norms_count": data.get("norms_count", 0),
+                    "findingsCount": data.get("findings_count", 0),
+                    "val": max(1, data.get("norms_count", 0)),
                     "color": data.get("color", "#6b7280"),
-                    "val": max(1, data.get("findings_count", 0) + 1),  # размер узла
                 }
             )
 
@@ -141,8 +156,8 @@ class GraphBuilder:
                     "target": v,
                     "type": data.get("type", "reference"),
                     "color": data.get("color", "#6b7280"),
-                    "severity": data.get("severity", ""),
-                    "finding_id": data.get("finding_id"),
+                    "value": data.get("value", 1),
+                    "label": data.get("label", ""),
                 }
             )
 
@@ -177,9 +192,16 @@ class GraphBuilder:
         return [dict(row) for row in rows]
 
     async def _load_cross_refs(self) -> list[dict]:
-        """Загрузить перекрёстные ссылки."""
+        """Загрузить перекрёстные ссылки только между нашими документами."""
         async with get_db() as db:
-            cursor = await db.execute("SELECT from_doc, to_doc, context_text FROM cross_refs")
+            cursor = await db.execute(
+                """
+                SELECT cr.from_doc, cr.to_doc, cr.context_text
+                FROM cross_refs cr
+                WHERE cr.from_doc IN (SELECT id FROM documents)
+                  AND cr.to_doc IN (SELECT id FROM documents)
+                """
+            )
             rows = await cursor.fetchall()
         return [dict(row) for row in rows]
 

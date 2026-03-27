@@ -35,25 +35,25 @@ function StatCard({
 /** 4 карточки основных метрик дашборда. */
 export default function StatsCards({ stats }: { stats: StatsResponse }) {
   const coverage =
-    stats.totalNorms > 0
-      ? Math.round((stats.totalFindings / stats.totalNorms) * 100 * 10) / 10
+    stats.total_norms > 0
+      ? Math.round((stats.total_findings / stats.total_norms) * 100 * 10) / 10
       : 0;
 
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       <StatCard
         title="Документов"
-        value={stats.totalDocuments.toLocaleString("ru-RU")}
+        value={stats.total_documents.toLocaleString("ru-RU")}
         subtitle="НПА в базе"
       />
       <StatCard
         title="Норм"
-        value={stats.totalNorms.toLocaleString("ru-RU")}
+        value={stats.total_norms.toLocaleString("ru-RU")}
         subtitle="Пунктов статей"
       />
       <StatCard
         title="Обнаружений"
-        value={stats.totalFindings.toLocaleString("ru-RU")}
+        value={stats.total_findings.toLocaleString("ru-RU")}
         subtitle="Проблем найдено"
         accent="text-amber-500"
       />

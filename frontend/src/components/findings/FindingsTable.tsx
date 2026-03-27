@@ -71,19 +71,19 @@ export default function FindingsTable({ findings, isLoading }: FindingsTableProp
               {confidencePercent(f.confidence)}
             </TableCell>
             <TableCell className="max-w-[200px] truncate text-xs">
-              {f.normA.docId}
+              {f.norm_a.doc_id}
               <span className="ml-1 text-muted-foreground">
-                (ст. {f.normA.article}
-                {f.normA.paragraph ? `, п. ${f.normA.paragraph}` : ""})
+                (ст. {f.norm_a.article}
+                {f.norm_a.paragraph ? `, п. ${f.norm_a.paragraph}` : ""})
               </span>
             </TableCell>
             <TableCell className="max-w-[200px] truncate text-xs">
-              {f.normB ? (
+              {f.norm_b ? (
                 <>
-                  {f.normB.docId}
+                  {f.norm_b.doc_id}
                   <span className="ml-1 text-muted-foreground">
-                    (ст. {f.normB.article}
-                    {f.normB.paragraph ? `, п. ${f.normB.paragraph}` : ""})
+                    (ст. {f.norm_b.article}
+                    {f.norm_b.paragraph ? `, п. ${f.norm_b.paragraph}` : ""})
                   </span>
                 </>
               ) : (
@@ -91,7 +91,7 @@ export default function FindingsTable({ findings, isLoading }: FindingsTableProp
               )}
             </TableCell>
             <TableCell className="max-w-[180px] truncate text-xs text-muted-foreground">
-              {f.clusterTopic ?? "--"}
+              {f.cluster_topic ?? "--"}
             </TableCell>
           </TableRow>
         ))}

@@ -39,13 +39,13 @@ export default function AnalysisResults({ findings }: AnalysisResultsProps) {
             <p className="text-sm">{f.explanation}</p>
             <div className="flex gap-4 text-xs text-muted-foreground">
               <span>
-                Норма A: ст. {f.normA.article}
-                {f.normA.paragraph ? `, п. ${f.normA.paragraph}` : ""}
+                Норма A: ст. {f.norm_a.article}
+                {f.norm_a.paragraph ? `, п. ${f.norm_a.paragraph}` : ""}
               </span>
-              {f.normB && (
+              {f.norm_b && (
                 <span>
-                  Норма B: ст. {f.normB.article}
-                  {f.normB.paragraph ? `, п. ${f.normB.paragraph}` : ""}
+                  Норма B: ст. {f.norm_b.article}
+                  {f.norm_b.paragraph ? `, п. ${f.norm_b.paragraph}` : ""}
                 </span>
               )}
             </div>

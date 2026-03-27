@@ -26,7 +26,7 @@ export default function FindingsPage() {
       }),
   });
 
-  const totalPages = data?.pages ?? 1;
+  const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
 
   const handleReset = () => {
     setType("");
