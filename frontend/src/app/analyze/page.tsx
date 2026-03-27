@@ -3,19 +3,35 @@
 import { useState, useCallback, useRef } from "react";
 import { analyzeText } from "@/lib/api";
 import type {
-  AnalysisProgressData,
-  AnalysisCompleteData,
+  AnalysisStepData,
+  AnalysisResultData,
   AnalysisErrorData,
-  Finding,
+  AnalysisResultFinding,
+  AnalysisSimilarNorm,
 } from "@/lib/types";
 import AnalysisForm from "@/components/analyze/AnalysisForm";
 import AnalysisProgress from "@/components/analyze/AnalysisProgress";
 import AnalysisResults from "@/components/analyze/AnalysisResults";
 
+/** Шаг прогресса для отображения. */
+interface ProgressStep {
+  step: string;
+  message: string;
+  done: boolean;
+}
+
+const STEP_LABELS: Record<string, string> = {
+  embedding: "Эмбеддинг",
+  searching: "Поиск",
+  analyzing: "Анализ ИИ",
+};
+
 export default function AnalyzePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [steps, setSteps] = useState<AnalysisProgressData[]>([]);
-  const [findings, setFindings] = useState<Finding[]>([]);
+  const [steps, setSteps] = useState<ProgressStep[]>([]);
+  const [resultFindings, setResultFindings] = useState<AnalysisResultFinding[]>([]);
+  const [similarNorms, setSimilarNorms] = useState<AnalysisSimilarNorm[]>([]);
+  const [summary, setSummary] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
@@ -24,20 +40,40 @@ export default function AnalyzePage() {
     /* Сброс состояния */
     setIsAnalyzing(true);
     setSteps([]);
-    setFindings([]);
+    setResultFindings([]);
+    setSimilarNorms([]);
+    setSummary(null);
     setIsComplete(false);
     setError(null);
 
     const controller = analyzeText(text, (event) => {
       switch (event.event) {
-        case "progress":
-          setSteps((prev) => [...prev, event.data as AnalysisProgressData]);
+        case "embedding":
+        case "searching":
+        case "analyzing": {
+          const d = event.data as AnalysisStepData;
+          setSteps((prev) => {
+            const label = STEP_LABELS[event.event] ?? event.event;
+            const existing = prev.findIndex((s) => s.step === label);
+            const step: ProgressStep = {
+              step: label,
+              message: d.status,
+              done: d.done ?? false,
+            };
+            if (existing >= 0) {
+              const updated = [...prev];
+              updated[existing] = step;
+              return updated;
+            }
+            return [...prev, step];
+          });
           break;
-        case "finding":
-          setFindings((prev) => [...prev, event.data as Finding]);
-          break;
-        case "complete": {
-          const _complete = event.data as AnalysisCompleteData;
+        }
+        case "result": {
+          const d = event.data as AnalysisResultData;
+          setResultFindings(d.findings ?? []);
+          setSimilarNorms(d.similar_norms ?? []);
+          setSummary(d.summary ?? null);
           setIsComplete(true);
           setIsAnalyzing(false);
           break;
@@ -71,7 +107,11 @@ export default function AnalyzePage() {
         error={error}
       />
 
-      <AnalysisResults findings={findings} />
+      <AnalysisResults
+        findings={resultFindings}
+        similarNorms={similarNorms}
+        summary={summary}
+      />
     </div>
   );
 }

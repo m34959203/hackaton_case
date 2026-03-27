@@ -1,11 +1,16 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { AnalysisProgressData } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle2 } from "lucide-react";
+
+interface ProgressStep {
+  step: string;
+  message: string;
+  done: boolean;
+}
 
 interface AnalysisProgressProps {
-  steps: AnalysisProgressData[];
+  steps: ProgressStep[];
   isComplete: boolean;
   error: string | null;
 }
@@ -17,8 +22,9 @@ export default function AnalysisProgress({
 }: AnalysisProgressProps) {
   if (steps.length === 0 && !error) return null;
 
-  const latestProgress = steps.length > 0 ? steps[steps.length - 1].progress : 0;
-  const progressPct = Math.min(Math.round(latestProgress * 100), 100);
+  const totalSteps = 3;
+  const doneCount = steps.filter((s) => s.done).length;
+  const progressPct = isComplete ? 100 : Math.round((doneCount / totalSteps) * 100);
 
   return (
     <Card>
@@ -27,6 +33,7 @@ export default function AnalysisProgress({
           {!isComplete && !error && (
             <Loader2 className="size-4 animate-spin text-blue-400" />
           )}
+          {isComplete && <CheckCircle2 className="size-4 text-emerald-400" />}
           Прогресс анализа
         </CardTitle>
       </CardHeader>
@@ -41,10 +48,14 @@ export default function AnalysisProgress({
         <p className="text-xs text-muted-foreground">{progressPct}%</p>
 
         {/* Шаги */}
-        <div className="max-h-48 space-y-1 overflow-y-auto">
+        <div className="max-h-48 space-y-1.5 overflow-y-auto">
           {steps.map((step, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs">
-              <span className="mt-0.5 size-1.5 shrink-0 rounded-full bg-blue-400" />
+            <div key={i} className="flex items-center gap-2 text-xs">
+              {step.done ? (
+                <CheckCircle2 className="size-3.5 shrink-0 text-emerald-400" />
+              ) : (
+                <Loader2 className="size-3.5 shrink-0 animate-spin text-blue-400" />
+              )}
               <span className="text-muted-foreground">
                 <span className="font-medium text-foreground">{step.step}:</span>{" "}
                 {step.message}

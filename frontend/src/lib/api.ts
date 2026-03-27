@@ -150,7 +150,7 @@ export function compare(
   normBId: string,
 ): Promise<FindingDetail> {
   return apiFetch<FindingDetail>(
-    `/api/compare?norm_a_id=${encodeURIComponent(normAId)}&norm_b_id=${encodeURIComponent(normBId)}`,
+    `/api/compare/${encodeURIComponent(normAId)}/${encodeURIComponent(normBId)}`,
   );
 }
 

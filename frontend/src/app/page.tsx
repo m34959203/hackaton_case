@@ -12,17 +12,62 @@ import FindingsByTypeChart from "@/components/dashboard/FindingsByTypeChart";
 import DomainChart from "@/components/dashboard/DomainChart";
 import SeverityChart from "@/components/dashboard/SeverityChart";
 import RecentFindings from "@/components/dashboard/RecentFindings";
+import { Scale, Sparkles } from "lucide-react";
 
 import type { StatsResponse } from "@/lib/types";
 
 /** Контент дашборда со статистикой. */
 function DashboardContent({ stats }: { stats: StatsResponse }) {
+  const highCount =
+    stats.findings_by_severity.find((s) => s.severity === "high")?.count ?? 0;
+  const contradictions =
+    stats.findings_by_type.find((t) => t.type === "contradiction")?.count ?? 0;
+  const duplications =
+    stats.findings_by_type.find((t) => t.type === "duplication")?.count ?? 0;
+  const outdated =
+    stats.findings_by_type.find((t) => t.type === "outdated")?.count ?? 0;
+
   return (
     <>
       {/* Карточки метрик */}
       <StatsCards stats={stats} />
 
-      <Separator className="my-4" />
+      {/* Сводка анализа */}
+      <Card className="border-blue-500/20 bg-gradient-to-r from-blue-500/5 via-violet-500/5 to-transparent">
+        <CardContent className="py-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-blue-500/10 p-2">
+              <Sparkles className="size-5 text-blue-400" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold">Сводка анализа</h3>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                ZanAlytics проанализировал{" "}
+                <span className="font-medium text-foreground">
+                  {stats.total_documents} документов
+                </span>{" "}
+                ({stats.total_norms.toLocaleString("ru-RU")} норм) и выявил{" "}
+                <span className="font-medium text-amber-400">
+                  {stats.total_findings} проблем
+                </span>
+                : {contradictions} противоречий, {duplications} дублирований и{" "}
+                {outdated} устаревших норм.
+                {highCount > 0 && (
+                  <>
+                    {" "}Из них{" "}
+                    <span className="font-medium text-red-400">
+                      {highCount} с высокой серьёзностью
+                    </span>
+                    , требующих приоритетного внимания.
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Separator className="my-2" />
 
       {/* Графики: тип + серьёзность */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -35,7 +80,7 @@ function DashboardContent({ stats }: { stats: StatsResponse }) {
         <DomainChart data={stats.top_domains} />
       </div>
 
-      <Separator className="my-4" />
+      <Separator className="my-2" />
 
       {/* Последние обнаружения */}
       <div className="mt-4">
@@ -83,11 +128,15 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      {/* Заголовок */}
+      <div className="flex items-center gap-4">
+        <div className="rounded-xl bg-gradient-to-br from-blue-500 to-violet-600 p-3 shadow-lg shadow-blue-500/20">
+          <Scale className="size-7 text-white" />
+        </div>
         <div>
-          <h1 className="text-2xl font-bold">Панель управления</h1>
+          <h1 className="text-2xl font-bold">ZanAlytics</h1>
           <p className="text-sm text-muted-foreground">
-            Обзор анализа законодательства Республики Казахстан
+            AI-анализ законодательства Республики Казахстан
           </p>
         </div>
       </div>

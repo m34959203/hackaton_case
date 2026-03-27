@@ -3,7 +3,7 @@
 import { use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +11,7 @@ import { getFinding } from "@/lib/api";
 import { typeColor, severityColor, typeLabel, formatDate } from "@/lib/utils";
 import NormComparison from "@/components/findings/NormComparison";
 import AiExplanation from "@/components/findings/AiExplanation";
-import { ArrowLeft, Flag } from "lucide-react";
+import { ArrowLeft, Flag, Calendar, Layers } from "lucide-react";
 import { useState } from "react";
 
 export default function FindingDetailPage({
@@ -65,33 +65,38 @@ export default function FindingDetailPage({
     <div className="space-y-6">
       {/* Заголовок */}
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="sm"
               onClick={() => router.push("/findings")}
             >
-              <ArrowLeft className="size-4" />
+              <ArrowLeft className="mr-1 size-4" />
+              Назад
             </Button>
-            <h1 className="text-2xl font-bold">
-              Обнаружение #{finding.id}
-            </h1>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className={typeColor(finding.type)}>
+          <h1 className="text-2xl font-bold">
+            Обнаружение #{finding.id}
+          </h1>
+
+          {/* Бейджи типа и серьёзности */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className={`${typeColor(finding.type)} px-3 py-1 text-sm font-semibold`}>
               {typeLabel(finding.type)}
             </Badge>
-            <Badge className={severityColor(finding.severity)}>
+            <Badge className={`${severityColor(finding.severity)} px-3 py-1 text-sm font-semibold`}>
               {typeLabel(finding.severity)}
             </Badge>
             {finding.cluster_topic && (
-              <span className="text-xs text-muted-foreground">
-                Кластер: {finding.cluster_topic}
-              </span>
+              <Badge variant="outline" className="gap-1 px-2.5 py-1">
+                <Layers className="size-3" />
+                {finding.cluster_topic}
+              </Badge>
             )}
             {finding.created_at && (
-              <span className="text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Calendar className="size-3" />
                 {formatDate(finding.created_at)}
               </span>
             )}

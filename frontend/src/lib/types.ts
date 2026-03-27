@@ -155,10 +155,47 @@ export interface PaginatedResponse<T> {
 /* ───────── SSE-события анализа ───────── */
 
 export interface AnalysisEvent {
-  event: "progress" | "finding" | "complete" | "error";
-  data: AnalysisProgressData | Finding | AnalysisCompleteData | AnalysisErrorData;
+  event: "embedding" | "searching" | "analyzing" | "result" | "error";
+  data: AnalysisStepData | AnalysisResultData | AnalysisErrorData;
 }
 
+/** Данные шага анализа (embedding / searching / analyzing). */
+export interface AnalysisStepData {
+  status: string;
+  done?: boolean;
+  count?: number;
+}
+
+/** Итоговый результат анализа (event: result). */
+export interface AnalysisResultData {
+  findings: AnalysisResultFinding[];
+  summary: string;
+  similar_norms: AnalysisSimilarNorm[];
+}
+
+export interface AnalysisResultFinding {
+  type: string;
+  severity: string;
+  confidence: number;
+  related_norm_id: string | null;
+  explanation: string;
+}
+
+export interface AnalysisSimilarNorm {
+  id: string;
+  doc_id: string;
+  article: number;
+  paragraph: number | null;
+  text: string;
+  doc_title: string;
+  similarity: number;
+}
+
+export interface AnalysisErrorData {
+  message: string;
+}
+
+/** Legacy aliases for backward compatibility. */
 export interface AnalysisProgressData {
   step: string;
   progress: number;
@@ -167,9 +204,5 @@ export interface AnalysisProgressData {
 
 export interface AnalysisCompleteData {
   findings_count: number;
-  message: string;
-}
-
-export interface AnalysisErrorData {
   message: string;
 }
