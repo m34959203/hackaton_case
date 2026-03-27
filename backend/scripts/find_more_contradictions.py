@@ -1,10 +1,10 @@
 """Расширенный поиск противоречий: 300 пар с фокусом на нормы с числами из разных документов.
 
 Стратегия:
-1. Находим кластеры с нормами из 2+ документов, содержащие числовые данные.
-2. Сортируем пары по embedding-сходству (ChromaDB) — проверяем наиболее похожие первыми.
-3. Пропускаем уже проверенные пары и пары из одного документа.
-4. Проверяем 300 пар через LLM с порогом confidence >= 0.5.
+1. Находим все нормы с числовыми данными (сроки, суммы, проценты).
+2. Для каждой нормы ищем семантически похожие нормы из ДРУГИХ документов через ChromaDB.
+3. Фильтруем: обе нормы должны содержать числа, similarity 0.7-0.95 (не дубликаты).
+4. Проверяем 300 лучших пар через LLM с порогом confidence >= 0.5.
 5. Дописываем новые findings в SQLite (не удаляя существующие).
 6. Пересобираем граф.
 
@@ -13,12 +13,11 @@
 
 import asyncio
 import logging
+import random
 import re
 import sys
 import time
 from pathlib import Path
-
-import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -43,20 +42,15 @@ NUMBER_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# Приоритетные домены
-PRIORITY_KEYWORDS = [
-    'труд', 'работ', 'охран', 'налог', 'земел', 'земл', 'пенс',
-    'соци', 'страхов', 'выплат', 'зарплат', 'отпуск', 'штраф',
-    'занятост', 'безопасност', 'здоров', 'медицин', 'лиценз',
-    'предприниматель', 'собствен', 'аренд', 'сроки', 'возраст',
-]
-
 TARGET_CHECKS = 300
-MIN_NORM_LENGTH = 50
+MIN_NORM_LENGTH = 80
+# Similarity range: high enough to be same topic, low enough to not be duplicate
+SIM_MIN = 0.70
+SIM_MAX = 0.96
 
 
 async def load_existing_pairs() -> set[tuple[str, str]]:
-    """Загрузить уже проверенные пары (существующие findings)."""
+    """Загрузить уже проверенные пары (существующие contradiction findings)."""
     pairs = set()
     async with get_db() as db:
         cursor = await db.execute(
@@ -66,187 +60,140 @@ async def load_existing_pairs() -> set[tuple[str, str]]:
         for row in rows:
             pair = tuple(sorted([row["norm_a_id"], row["norm_b_id"]]))
             pairs.add(pair)
-    logger.info("Уже проверенных пар (contradictions): %d", len(pairs))
+    logger.info("Уже проверенных пар (contradictions в БД): %d", len(pairs))
     return pairs
 
 
-async def load_multi_doc_clusters() -> list[dict]:
-    """Загрузить кластеры с нормами из 2+ разных документов."""
-    async with get_db() as db:
-        cursor = await db.execute("""
-            SELECT cluster_id, cluster_topic, COUNT(DISTINCT doc_id) as doc_count,
-                   COUNT(*) as norm_count
-            FROM norms
-            WHERE cluster_id IS NOT NULL AND cluster_topic IS NOT NULL
-            GROUP BY cluster_id
-            HAVING doc_count >= 2
-            ORDER BY doc_count DESC
-        """)
-        rows = await cursor.fetchall()
-    clusters = [dict(r) for r in rows]
-    logger.info("Всего кластеров с 2+ документами: %d", len(clusters))
-    return clusters
-
-
-def score_cluster(cluster: dict) -> float:
-    """Оценить приоритет кластера: выше для приоритетных доменов."""
-    topic = (cluster.get("cluster_topic") or "").lower()
-    priority_bonus = sum(2.0 for kw in PRIORITY_KEYWORDS if kw in topic)
-    # Больше документов -> больше шансов на противоречие, но не слишком широкие
-    doc_factor = min(cluster["doc_count"], 20) / 20.0
-    return priority_bonus + doc_factor
-
-
-async def load_norms_for_cluster(cluster_id: int) -> list[dict]:
-    """Загрузить нормы кластера с числовыми данными."""
+async def load_norms_with_numbers() -> dict[str, dict]:
+    """Загрузить все нормы с числовыми данными (>80 символов)."""
     async with get_db() as db:
         cursor = await db.execute(
-            "SELECT id, doc_id, text FROM norms WHERE cluster_id = ?",
-            (cluster_id,),
+            "SELECT id, doc_id, text, cluster_id FROM norms WHERE LENGTH(text) > ?",
+            (MIN_NORM_LENGTH,),
         )
         rows = await cursor.fetchall()
-    all_norms = [dict(r) for r in rows]
 
-    # Фильтруем по длине
-    all_norms = [n for n in all_norms if len(n["text"]) >= MIN_NORM_LENGTH]
-
-    # Отдельно нормы с числами
-    with_numbers = [n for n in all_norms if NUMBER_PATTERN.search(n["text"])]
-
-    # Если хватает норм с числами — возвращаем их, иначе все
-    if len(with_numbers) >= 4:
-        return with_numbers
-    return all_norms
-
-
-def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
-    """Косинусное сходство двух векторов."""
-    a = np.array(vec_a, dtype=np.float32)
-    b = np.array(vec_b, dtype=np.float32)
-    dot = np.dot(a, b)
-    norm = np.linalg.norm(a) * np.linalg.norm(b)
-    if norm == 0:
-        return 0.0
-    return float(dot / norm)
+    norms = {}
+    for r in rows:
+        if NUMBER_PATTERN.search(r["text"]):
+            norms[r["id"]] = {
+                "id": r["id"],
+                "doc_id": r["doc_id"],
+                "text": r["text"],
+                "cluster_id": r["cluster_id"],
+            }
+    logger.info("Норм с числами (>%d символов): %d", MIN_NORM_LENGTH, len(norms))
+    return norms
 
 
-async def get_embeddings_from_chroma(norm_ids: list[str]) -> dict[str, list[float]]:
-    """Получить embedding-ы норм из ChromaDB."""
-    if not norm_ids:
-        return {}
+def get_embeddings_for_norms(norm_ids: list[str]) -> dict[str, list[float]]:
+    """Получить embeddings норм из ChromaDB (синхронно)."""
     collection = get_chroma_collection("norms")
     result = {}
-    # ChromaDB get() may fail for missing IDs, so batch carefully
-    batch_size = 100
+    batch_size = 200
     for i in range(0, len(norm_ids), batch_size):
         batch = norm_ids[i:i + batch_size]
         try:
             data = collection.get(ids=batch, include=["embeddings"])
-            if data and data["ids"] and data["embeddings"]:
-                for nid, emb in zip(data["ids"], data["embeddings"]):
-                    if emb is not None:
-                        result[nid] = emb
-        except Exception:
-            logger.debug("ChromaDB get failed for batch starting at %d", i)
+            if data and data.get("ids") and data.get("embeddings") is not None:
+                for j, nid in enumerate(data["ids"]):
+                    emb = data["embeddings"][j]
+                    if emb is not None and len(emb) > 0:
+                        result[nid] = list(emb)
+        except Exception as exc:
+            logger.warning("ChromaDB get failed for batch at %d: %s", i, str(exc)[:100])
+    logger.info("Получено embeddings: %d из %d", len(result), len(norm_ids))
     return result
 
 
-async def generate_smart_pairs(
-    clusters: list[dict],
+def find_cross_doc_similar_pairs(
+    norms: dict[str, dict],
+    embeddings: dict[str, list[float]],
     existing_pairs: set[tuple[str, str]],
     max_pairs: int = 500,
-) -> list[tuple[dict, dict, int]]:
-    """Генерировать пары норм с числами из разных документов, отсортированные по сходству."""
-    logger.info("Генерация пар из %d кластеров (лимит: %d пар)...", len(clusters), max_pairs)
+    sample_size: int = 400,
+) -> list[tuple[dict, dict, float]]:
+    """Для выборки норм найти наиболее похожие нормы из ДРУГИХ документов через ChromaDB."""
+    collection = get_chroma_collection("norms")
 
-    # Сортируем кластеры по приоритету
-    clusters_sorted = sorted(clusters, key=score_cluster, reverse=True)
+    # Берём случайную выборку норм с embeddings
+    norm_ids_with_emb = [nid for nid in norms if nid in embeddings]
+    if len(norm_ids_with_emb) > sample_size:
+        sample_ids = random.sample(norm_ids_with_emb, sample_size)
+    else:
+        sample_ids = norm_ids_with_emb
 
-    raw_pairs: list[tuple[dict, dict, int, float]] = []  # (norm_a, norm_b, cluster_id, similarity)
+    logger.info("Выборка для поиска пар: %d норм", len(sample_ids))
 
-    doc_titles = {}
-    async with get_db() as db:
-        cursor = await db.execute("SELECT id, title FROM documents")
-        for row in await cursor.fetchall():
-            doc_titles[row["id"]] = row["title"]
+    raw_pairs: list[tuple[str, str, float]] = []
+    seen_pairs: set[tuple[str, str]] = set()
 
-    clusters_processed = 0
-    for cluster in clusters_sorted:
-        if len(raw_pairs) >= max_pairs * 2:
-            break
+    for i in range(0, len(sample_ids), 20):
+        batch_ids = sample_ids[i:i + 20]
+        batch_embs = [embeddings[nid] for nid in batch_ids]
 
-        cid = cluster["cluster_id"]
-        norms = await load_norms_for_cluster(cid)
-
-        # Группируем по документу
-        by_doc: dict[str, list[dict]] = {}
-        for n in norms:
-            by_doc.setdefault(n["doc_id"], []).append(n)
-
-        if len(by_doc) < 2:
+        try:
+            results = collection.query(
+                query_embeddings=batch_embs,
+                n_results=15,
+                include=["distances"],
+            )
+        except Exception:
+            logger.debug("ChromaDB query failed for batch at %d", i)
             continue
 
-        # Получаем embeddings для норм этого кластера
-        all_norm_ids = [n["id"] for n in norms]
-        embeddings = await get_embeddings_from_chroma(all_norm_ids)
+        for idx, qid in enumerate(batch_ids):
+            if idx >= len(results["ids"]):
+                break
+            q_doc = norms[qid]["doc_id"]
 
-        # Генерируем пары из разных документов
-        doc_ids = list(by_doc.keys())
-        for i in range(len(doc_ids)):
-            for j in range(i + 1, len(doc_ids)):
-                # Берём до 3 норм с числами из каждого документа
-                norms_a = [n for n in by_doc[doc_ids[i]] if NUMBER_PATTERN.search(n["text"])][:3]
-                if not norms_a:
-                    norms_a = by_doc[doc_ids[i]][:2]
-                norms_b = [n for n in by_doc[doc_ids[j]] if NUMBER_PATTERN.search(n["text"])][:3]
-                if not norms_b:
-                    norms_b = by_doc[doc_ids[j]][:2]
+            for j, rid in enumerate(results["ids"][idx]):
+                if rid == qid:
+                    continue
+                # Должна быть норма с числами
+                if rid not in norms:
+                    continue
+                # Должна быть из другого документа
+                if norms[rid]["doc_id"] == q_doc:
+                    continue
 
-                for na in norms_a:
-                    for nb in norms_b:
-                        pair_key = tuple(sorted([na["id"], nb["id"]]))
-                        if pair_key in existing_pairs:
-                            continue
+                dist = results["distances"][idx][j]
+                sim = 1.0 - dist  # cosine distance -> similarity
 
-                        # Вычисляем сходство через embeddings
-                        sim = 0.5  # default
-                        if na["id"] in embeddings and nb["id"] in embeddings:
-                            sim = cosine_similarity(embeddings[na["id"]], embeddings[nb["id"]])
+                # Фильтр по similarity range
+                if sim < SIM_MIN or sim > SIM_MAX:
+                    continue
 
-                        raw_pairs.append((na, nb, cid, sim))
+                pair_key = tuple(sorted([qid, rid]))
+                if pair_key in seen_pairs or pair_key in existing_pairs:
+                    continue
+                seen_pairs.add(pair_key)
 
-        clusters_processed += 1
-        if clusters_processed % 20 == 0:
+                raw_pairs.append((qid, rid, sim))
+
+        if (i + 20) % 100 == 0:
             logger.info(
-                "Обработано кластеров: %d, собрано пар: %d",
-                clusters_processed, len(raw_pairs),
+                "ChromaDB query: обработано %d/%d, найдено пар: %d",
+                min(i + 20, len(sample_ids)), len(sample_ids), len(raw_pairs),
             )
 
-    # Сортируем по similarity (DESC) — наиболее похожие нормы из разных документов
-    # Высокое сходство + разные документы = высокий шанс противоречия
-    raw_pairs.sort(key=lambda x: x[3], reverse=True)
+    # Сортируем по сходству (DESC) — наиболее похожие нормы с числами из разных документов
+    raw_pairs.sort(key=lambda x: x[2], reverse=True)
 
-    # Берём top max_pairs, убираем дубли пар
-    seen = set()
+    # Конвертируем в нужный формат
     result = []
-    for na, nb, cid, sim in raw_pairs:
-        pair_key = tuple(sorted([na["id"], nb["id"]]))
-        if pair_key in seen:
-            continue
-        seen.add(pair_key)
-        result.append((na, nb, cid))
-        if len(result) >= max_pairs:
-            break
+    for qid, rid, sim in raw_pairs[:max_pairs]:
+        result.append((norms[qid], norms[rid], sim))
 
     logger.info(
-        "Итого уникальных пар для проверки: %d (из %d кандидатов)",
-        len(result), len(raw_pairs),
+        "Итого пар для проверки: %d (из %d кандидатов, диапазон sim: %.2f-%.2f)",
+        len(result), len(raw_pairs), SIM_MIN, SIM_MAX,
     )
     return result
 
 
 async def check_pairs_for_contradictions(
-    pairs: list[tuple[dict, dict, int]],
+    pairs: list[tuple[dict, dict, float]],
     max_checks: int = TARGET_CHECKS,
 ) -> list[dict]:
     """Проверить пары через LLM на противоречия."""
@@ -264,7 +211,7 @@ async def check_pairs_for_contradictions(
     errors = 0
     start_time = time.time()
 
-    for norm_a, norm_b, cid in pairs[:max_checks]:
+    for norm_a, norm_b, sim in pairs[:max_checks]:
         prompt = CONTRADICTION_PROMPT.format(
             doc_a_title=doc_titles.get(norm_a["doc_id"], "Неизвестный документ"),
             norm_a_text=norm_a["text"][:1500],
@@ -289,14 +236,16 @@ async def check_pairs_for_contradictions(
                         "norm_a_id": norm_a["id"],
                         "norm_b_id": norm_b["id"],
                         "explanation": result.get("explanation", "Коллизия обнаружена LLM"),
-                        "cluster_id": cid,
+                        "cluster_id": norm_a.get("cluster_id"),
                         "legal_principle": result.get("legal_principle", ""),
+                        "similarity": sim,
                     })
                     logger.info(
-                        ">>> КОЛЛИЗИЯ #%d [%s, %.2f]: %s <-> %s — %s",
+                        ">>> КОЛЛИЗИЯ #%d [%s, %.2f, sim=%.3f]: %s <-> %s — %s",
                         len(findings),
                         result.get("severity", "?"),
                         confidence,
+                        sim,
                         norm_a["id"][:35],
                         norm_b["id"][:35],
                         (result.get("explanation", ""))[:100],
@@ -383,6 +332,7 @@ async def main() -> None:
     logger.info("=" * 70)
     logger.info("РАСШИРЕННЫЙ ПОИСК ПРОТИВОРЕЧИЙ — ZanAlytics")
     logger.info("Цель: %d проверок, порог confidence >= 0.5", TARGET_CHECKS)
+    logger.info("Similarity range: %.2f - %.2f", SIM_MIN, SIM_MAX)
     logger.info("=" * 70)
 
     await init_db()
@@ -390,23 +340,33 @@ async def main() -> None:
     # 1. Загружаем существующие пары
     existing_pairs = await load_existing_pairs()
 
-    # 2. Загружаем кластеры
-    clusters = await load_multi_doc_clusters()
-
-    # 3. Генерируем умные пары
-    pairs = await generate_smart_pairs(clusters, existing_pairs, max_pairs=TARGET_CHECKS + 100)
-
-    if not pairs:
-        logger.warning("Не удалось сгенерировать пары для проверки!")
+    # 2. Загружаем нормы с числами
+    norms = await load_norms_with_numbers()
+    if not norms:
+        logger.warning("Нет норм с числами!")
         return
 
-    # 4. Проверяем пары через LLM
+    # 3. Получаем embeddings из ChromaDB
+    embeddings = get_embeddings_for_norms(list(norms.keys()))
+
+    # 4. Находим cross-doc пары через similarity search
+    pairs = find_cross_doc_similar_pairs(
+        norms, embeddings, existing_pairs,
+        max_pairs=TARGET_CHECKS + 100,
+        sample_size=500,
+    )
+
+    if not pairs:
+        logger.warning("Не удалось найти пары для проверки!")
+        return
+
+    # 5. Проверяем пары через LLM
     new_findings = await check_pairs_for_contradictions(pairs, max_checks=TARGET_CHECKS)
 
-    # 5. Сохраняем новые findings
+    # 6. Сохраняем новые findings
     saved = await save_new_findings(new_findings)
 
-    # 6. Пересобираем граф
+    # 7. Пересобираем граф
     await regenerate_graph()
 
     # Итоговая статистика
