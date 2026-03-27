@@ -1,67 +1,43 @@
 # Спринт-план: 10 дней (27 марта — 5 апреля 2026)
 
-## Фаза 1: Фундамент (Дни 1-3, 27-29 марта)
+## Фаза 1: Фундамент (Дни 1-3, 27-29 марта) ✅ ЗАВЕРШЕНА
 
-**Цель**: MVP — парсер + эмбеддинги + базовый граф. Сдача этапа #1.
+### День 1 (27 марта) — Полный scaffold ✅
+- [x] 17 файлов документации
+- [x] Backend: 35+ Python файлов (config, database, models, scraper, pipeline, llm, api)
+- [x] Frontend: 40+ TS/TSX файлов (9 страниц, 16 компонентов, shadcn/ui)
+- [x] Парсинг 59 документов → 54 526 норм, 870 514 ссылок
+- [x] Эмбеддинг → ChromaDB (54 526 векторов, 768-dim)
+- [x] Кластеризация UMAP+HDBSCAN → 672 кластера с LLM-именованием
+- [x] Quick analyze: 200 дублирований + 100 устаревших
+- [x] Docker: Dockerfile backend + frontend
+- [x] 6 коммитов на GitHub
 
-### День 1 (27 марта) — Инициализация + Парсер + Backend + Frontend ✅ ЗАВЕРШЁН
-- [x] Инициализация репозитория, структура проекта
-- [x] Документация (README, CLAUDE.md, docs/ — 17 файлов)
-- [x] `backend/app/config.py` — настройки через pydantic-settings
-- [x] `backend/app/database.py` — подключение SQLite + ChromaDB
-- [x] `backend/app/models/document.py` — модели Document, Norm, CrossRef
-- [x] `backend/app/models/finding.py` — модель Finding
-- [x] `backend/app/scraper/seed_docs.py` — 59 верифицированных DOC_ID
-- [x] `backend/app/scraper/fetcher.py` — async HTTP-клиент (aiohttp, rate limit, retry, cache)
-- [x] `backend/app/scraper/parser.py` — извлечение текста, метаданных, ссылок
-- [x] `backend/app/scraper/structural.py` — разбиение на статьи/пункты (regex state machine)
-- [x] `backend/scripts/scrape.py` — CLI для запуска парсинга
-- [x] Парсинг 59 документов → **54 526 норм, 870 514 ссылок**
-- [x] `backend/app/llm/client.py` — async Ollama клиент (httpx)
-- [x] `backend/app/llm/prompts.py` — 5 промптов на русском (contradiction, duplication, outdated, explanation, cluster_topic)
-- [x] `backend/app/pipeline/embedder.py` — эмбеддинги Ollama nomic-embed-text → ChromaDB
-- [x] `backend/app/pipeline/clusterer.py` — UMAP + HDBSCAN → 672 кластера
-- [x] `backend/app/pipeline/dedup.py` — cosine similarity + LLM подтверждение
-- [x] `backend/app/pipeline/contradiction.py` — LLM-as-Judge
-- [x] `backend/app/pipeline/outdated.py` — статус + даты + LLM
-- [x] `backend/app/pipeline/graph_builder.py` — NetworkX → JSON
-- [x] `backend/app/main.py` — FastAPI app с lifespan, CORS, all routers
-- [x] `backend/app/api/` — все 9 endpoints (documents, findings, graph, search, compare, analyze SSE, stats, health)
-- [x] `backend/scripts/quick_analyze.py` — быстрый анализ (embedding-based dedup + LLM contradictions)
-- [x] Frontend: Next.js 16 scaffold, shadcn/ui, TanStack React Query
-- [x] Frontend: layout (Sidebar, Header), Providers
-- [x] Frontend: Dashboard — StatsCards, FindingsByTypeChart, DomainChart, SeverityChart, RecentFindings
-- [x] Frontend: 3D-граф — ForceGraph3D (dynamic import), GraphControls, GraphNodeInfo
-- [x] Frontend: Findings — FindingsTable, FindingsFilters, NormComparison, AiExplanation
-- [x] Frontend: Analyze — AnalysisForm, AnalysisProgress, AnalysisResults (SSE)
-- [x] Frontend: Documents — список + детали с деревом норм
-- [x] Frontend: About — методология
-- [x] Эмбеддинг 54 526 норм → ChromaDB (768 dim, ~8 мин)
-- [x] Кластеризация UMAP+HDBSCAN → 672 кластера с LLM-именованием (~39 мин)
-- [x] Quick analyze: 200 дублирований + 100 устаревших = **300 findings**
-- [x] Граф: 118 639 узлов, 196 453 рёбер → `data/graph.json`
-- [x] Docker: `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml`
-- [x] 6 коммитов, всё на GitHub
-- [x] Backend API работает на порту 8001
-- [x] Frontend работает на порту 3300
-- [x] `npm run build` — 0 ошибок TypeScript
+### День 2 (28 марта) — Анализ + Интеграция ✅
+- [x] Улучшен промпт противоречий → 6 реальных коллизий через Ollama
+- [x] Граф оптимизирован: 118K узлов → 59 (только документы)
+- [x] CORS для портов 3300 + Tailscale
+- [x] Frontend: все типы → snake_case, подключение к API
+- [x] Loading/error/empty states на всех 8 страницах
+- [x] Docker compose: full e2e тест пройден
+- [x] 50 дублирований обогащены LLM-объяснениями
 
-### День 2 (28 марта) — Противоречия + Граф оптимизация ✅ ЗАВЕРШЁН
-- [x] Улучшить промпт противоречий → **6 реальных противоречий найдено**
-- [x] Перезапустить LLM-анализ с улучшенным промптом
-- [x] Оптимизировать граф: **59 узлов (документы), 171 ребро** (было 118K узлов)
-- [x] LLM-объяснения для 50 дублирований (enrichment)
-- [x] Frontend подключение к API: dashboard, graph, findings — работает
-- [x] Fix: CORS для порта 3300 + типы TypeScript обновлены
-- [x] Docker build — 0 ошибок
-- [x] Loading states для всех страниц
-- [x] 2 коммита (Day 2)
-
-### День 3 (29 марта) — MVP Delivery + Сдача этапа #1 ⏳ В РАБОТЕ
-- [x] Fix trailing slash в API-роутах
-- [ ] Docker compose up — полный e2e тест
-- [x] Обновить документацию (README, SPRINT_PLAN, DEVELOPMENT, CHANGELOG)
-- [ ] **Сдача этапа #1**: GitHub + архитектура + работающий MVP
+### День 3 (29 марта) — Сдача этапа #1 + Gemini + Редизайн ✅
+- [x] Trailing slash fix (redirect_slashes=False) — все 9 endpoints 200 OK
+- [x] Multi-provider LLM: Ollama, OpenAI API, Anthropic, **Google Gemini**
+- [x] Gemini 2.0 Flash подключён — **19 новых противоречий за 3 мин** (итого 25)
+- [x] auto_pipeline.sh — автономный скрипт (scrape→embed→analyze→graph→export)
+- [x] Demo data: seed_data.json (447KB) + highlights.json (38KB)
+- [x] Frontend: fix compare/analyze, SVG favicon, OG metadata
+- [x] **Полный UI/UX редизайн** по UI Pro Max: Trust & Authority дизайн-система
+  - Navy #1E3A8A + Gold #B45309 палитра
+  - Тёмный sidebar с Lucide иконками
+  - Gradient hero dashboard, цветные stats cards
+  - Glass-панели на графе, professional findings table
+  - Smooth transitions, hover effects, consistent rounding
+- [x] Production deploy: http://100.118.110.5:3300
+- [x] **Сдача этапа #1**: GitHub + работающий MVP
+- [x] 16 коммитов на GitHub
 
 ---
 
@@ -69,54 +45,46 @@
 
 **Цель**: Качественные findings + интерактивный frontend. Сдача этапа #2.
 
-### День 4 (30 марта) — Улучшение качества анализа
-- [ ] Расширить LLM-анализ: проверить больше пар на противоречия
-- [ ] Добавить duplication confirmation через LLM для топ-50 embedding-дублирований
-- [ ] Запуск полного анализа с улучшенными промптами
-- [ ] Генерация LLM-объяснений для каждого finding
+### День 4 (30 марта) — Расширение анализа
+- [ ] Запустить поиск противоречий через Gemini на 500+ пар (auto_pipeline.sh)
+- [ ] Добавить retry + rate limit handling в Gemini клиент
+- [ ] LLM-обогащение оставшихся 150 дублирований
+- [ ] Добавить recommendations для каждого finding
+- [ ] Проверить frontend с 325+ findings
 
-### День 5 (31 марта) — Frontend интеграция
-- [ ] Подключить Dashboard к реальным данным /api/stats
-- [ ] Подключить 3D-граф к /api/graph (оптимизированный)
-- [ ] Подключить Findings к /api/findings с реальной пагинацией
-- [ ] Подключить Finding detail к /api/findings/:id
-- [ ] Тестирование SSE анализа (/analyze)
+### День 5 (31 марта) — Интерактивность
+- [ ] Семантический поиск: тестирование /api/search с реальными запросами
+- [ ] SSE-анализ нового текста: end-to-end тест /analyze
+- [ ] Клик по узлу графа → навигация к документу
+- [ ] Клик по ребру графа → навигация к finding
+- [ ] Фильтры графа: по типу документа и типу связи
 
-### День 6 (1 апреля) — UI polish
-- [ ] Loading states, error states, empty states
-- [ ] Анимации перехода между страницами
+### День 6 (1 апреля) — Polish + Mobile
 - [ ] Responsive layout для мобильных
-- [ ] Оптимизация 3D-графа (только документы, не все нормы)
+- [ ] Анимации графа (частицы на contradiction рёбрах)
+- [ ] Word-level diff в NormComparison
+- [ ] Улучшить About страницу (методология для жюри)
+- [ ] Темная/светлая тема переключатель
 
 ### День 7 (2 апреля) — Сдача этапа #2
-- [ ] Финальное тестирование
-- [ ] Записать короткое демо-видео (3-5 мин)
-- [ ] Обновить README
+- [ ] Записать демо-видео (3-5 мин)
+- [ ] Обновить README со скриншотами
+- [ ] Docker compose финальная проверка
 - [ ] **Сдача этапа #2**: GitHub + демо-видео + README
 
 ---
 
 ## Фаза 3: Финал (Дни 8-10, 3-5 апреля)
 
-**Цель**: Полировка, демо-видео, презентация, финальная сдача.
-
-### День 8 (3 апреля) — Техническая экспертиза + Bug fix
-- [ ] Исправление багов
-- [ ] Frontend: `/about` — методология (Explainability)
-- [ ] Docker: финальная проверка `docker compose up`
-- [ ] Предгенерация демо-данных (`demo/seed_data.json`)
-
-### День 9 (4 апреля) — Документация + Демо-видео
-- [ ] Обновить README: скриншоты, актуальные данные
-- [ ] Записать демо-видео (3-5 минут)
-- [ ] Создать презентацию (13 слайдов по docs/PRESENTATION.md)
-- [ ] UI polish: финальные правки
+### День 8-9 (3-4 апреля)
+- [ ] Bug fix по результатам тестирования
+- [ ] Презентация (13 слайдов)
+- [ ] Запись и монтаж демо-видео
+- [ ] Финальный Docker деплой
 
 ### День 10 (5 апреля) — Финальная сдача (дедлайн 23:59)
-- [ ] Финальное тестирование Docker-деплоя
-- [ ] Редактирование демо-видео
-- [ ] Финализация презентации
-- [ ] Push всего на GitHub
+- [ ] Последние правки
+- [ ] Push на GitHub
 - [ ] **СДАЧА** до 23:59
 
 ---
@@ -130,31 +98,62 @@
 | Перекрёстных ссылок | 870 514 |
 | Эмбеддингов (ChromaDB) | 54 526 (768-dim) |
 | Кластеров | 672 |
-| Findings: дублирования | 200 |
+| **Findings: противоречия** | **25** (7 high, 8 medium, 10 low) |
+| Findings: дублирования | 200 (50 с LLM-объяснениями) |
 | Findings: устаревшие | 100 |
-| Findings: противоречия | **6** |
-| **Findings: всего** | **306** |
-| Граф: узлы | **59** (документы) |
-| Граф: рёбра | **171** (перекрёстные ссылки) |
+| **Findings: всего** | **325** |
+| Граф: узлы | 59 (документы) |
+| Граф: рёбра | 177 |
+| LLM провайдеры | Ollama, OpenAI, Anthropic, **Gemini** |
 | Backend файлов | 35+ Python |
 | Frontend файлов | 40+ TS/TSX |
-| Коммитов | 11 |
+| Коммитов | 16 |
+| Дизайн-система | Trust & Authority (Navy + Gold) |
 
-## Критический путь
+## Архитектура
 
 ```
-Парсинг → Эмбеддинги → Кластеризация → Анализ → Frontend → Polish
-(✅ 6 сек)  (✅ 8 мин)   (✅ 39 мин)    (✅ 12 мин) (✅ scaffold) (День 2+)
+┌─────────────────────────────────────┐
+│     Frontend (Next.js 16)           │
+│  :3300 (dev) / :3100 (Docker)       │
+│  Trust & Authority дизайн-система   │
+│  3D-граф • Дашборд • Сравнение      │
+└──────────────┬──────────────────────┘
+               │ REST API + SSE
+┌──────────────▼──────────────────────┐
+│     Backend (FastAPI)               │
+│  :8001 (dev) / :8000 (Docker)       │
+│  Scraper • NLP Pipeline • API       │
+├──────┬────────┬─────────────────────┤
+│LLM   │ChromaDB│     SQLite          │
+│Multi │embedded│   (metadata)        │
+│Prov. │        │                     │
+└──────┴────────┴─────────────────────┘
+  ↕ Ollama (local)
+  ↕ Gemini API (cloud) ← active
+  ↕ OpenAI/Anthropic (cloud, optional)
 ```
 
-**Блокер**: ~~Противоречия = 0~~ → Решено (День 2): 6 противоречий найдено после улучшения промпта.
+## Порты
 
-## Fallback-стратегия
+| Сервис | Dev | Docker | Tailscale |
+|--------|-----|--------|-----------|
+| Backend | 8001 | 8000 | 100.118.110.5:8001 |
+| Frontend | 3300 | 3100 | 100.118.110.5:3300 |
+| Ollama | 11434 | — | — |
+| Swagger | 8001/docs | 8000/docs | 100.118.110.5:8001/docs |
 
-| Риск | Fallback |
-|------|----------|
-| adilet.zan.kz недоступен | ✅ HTML закэширован в data/raw_html/ |
-| LLM даёт плохие результаты | ✅ Embedding-based дублирование работает без LLM |
-| Противоречия не находятся | Ослабить порог confidence, расширить промпт |
-| Не хватает времени на frontend | ✅ Все 9 страниц уже scaffold'ены |
-| Docker не работает у жюри | Демо-видео как backup |
+## Ключевые скрипты
+
+```bash
+# Автономный полный пайплайн
+cd backend && nohup bash scripts/auto_pipeline.sh &
+tail -f logs/pipeline.log       # мониторинг
+kill $(cat logs/pipeline.pid)   # стоп
+
+# Отдельные этапы
+python -m scripts.scrape           # парсинг 59 документов
+python -m scripts.quick_analyze    # быстрый анализ (embedding-based)
+python -m scripts.enrich_findings  # LLM-обогащение
+python -m scripts.export_demo      # экспорт demo JSON
+```
