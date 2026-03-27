@@ -4,76 +4,92 @@
 
 **Цель**: MVP — парсер + эмбеддинги + базовый граф. Сдача этапа #1.
 
-### День 1 (27 марта) — Инициализация + Парсер
+### День 1 (27 марта) — Инициализация + Парсер + Backend + Frontend ✅ ЗАВЕРШЁН
 - [x] Инициализация репозитория, структура проекта
-- [x] Документация (README, CLAUDE.md, docs/)
-- [ ] `backend/app/config.py` — настройки через pydantic-settings
-- [ ] `backend/app/database.py` — подключение SQLite + ChromaDB
-- [ ] `backend/app/models/document.py` — модели Document, Norm, CrossRef
-- [ ] `backend/app/models/finding.py` — модель Finding
-- [ ] `backend/app/scraper/seed_docs.py` — список ~50 DOC_ID для демо
-- [ ] `backend/app/scraper/fetcher.py` — async HTTP-клиент (aiohttp, rate limit)
-- [ ] `backend/app/scraper/parser.py` — извлечение текста, метаданных, ссылок
-- [ ] `backend/app/scraper/structural.py` — разбиение на статьи/пункты
-- [ ] `backend/scripts/scrape.py` — CLI для запуска парсинга
-- [ ] **Запустить парсинг на ночь** (50+ документов)
-- [ ] Первый push на GitHub
+- [x] Документация (README, CLAUDE.md, docs/ — 17 файлов)
+- [x] `backend/app/config.py` — настройки через pydantic-settings
+- [x] `backend/app/database.py` — подключение SQLite + ChromaDB
+- [x] `backend/app/models/document.py` — модели Document, Norm, CrossRef
+- [x] `backend/app/models/finding.py` — модель Finding
+- [x] `backend/app/scraper/seed_docs.py` — 59 верифицированных DOC_ID
+- [x] `backend/app/scraper/fetcher.py` — async HTTP-клиент (aiohttp, rate limit, retry, cache)
+- [x] `backend/app/scraper/parser.py` — извлечение текста, метаданных, ссылок
+- [x] `backend/app/scraper/structural.py` — разбиение на статьи/пункты (regex state machine)
+- [x] `backend/scripts/scrape.py` — CLI для запуска парсинга
+- [x] Парсинг 59 документов → **54 526 норм, 870 514 ссылок**
+- [x] `backend/app/llm/client.py` — async Ollama клиент (httpx)
+- [x] `backend/app/llm/prompts.py` — 5 промптов на русском (contradiction, duplication, outdated, explanation, cluster_topic)
+- [x] `backend/app/pipeline/embedder.py` — эмбеддинги Ollama nomic-embed-text → ChromaDB
+- [x] `backend/app/pipeline/clusterer.py` — UMAP + HDBSCAN → 672 кластера
+- [x] `backend/app/pipeline/dedup.py` — cosine similarity + LLM подтверждение
+- [x] `backend/app/pipeline/contradiction.py` — LLM-as-Judge
+- [x] `backend/app/pipeline/outdated.py` — статус + даты + LLM
+- [x] `backend/app/pipeline/graph_builder.py` — NetworkX → JSON
+- [x] `backend/app/main.py` — FastAPI app с lifespan, CORS, all routers
+- [x] `backend/app/api/` — все 9 endpoints (documents, findings, graph, search, compare, analyze SSE, stats, health)
+- [x] `backend/scripts/quick_analyze.py` — быстрый анализ (embedding-based dedup + LLM contradictions)
+- [x] Frontend: Next.js 16 scaffold, shadcn/ui, TanStack React Query
+- [x] Frontend: layout (Sidebar, Header), Providers
+- [x] Frontend: Dashboard — StatsCards, FindingsByTypeChart, DomainChart, SeverityChart, RecentFindings
+- [x] Frontend: 3D-граф — ForceGraph3D (dynamic import), GraphControls, GraphNodeInfo
+- [x] Frontend: Findings — FindingsTable, FindingsFilters, NormComparison, AiExplanation
+- [x] Frontend: Analyze — AnalysisForm, AnalysisProgress, AnalysisResults (SSE)
+- [x] Frontend: Documents — список + детали с деревом норм
+- [x] Frontend: About — методология
+- [x] Эмбеддинг 54 526 норм → ChromaDB (768 dim, ~8 мин)
+- [x] Кластеризация UMAP+HDBSCAN → 672 кластера с LLM-именованием (~39 мин)
+- [x] Quick analyze: 200 дублирований + 100 устаревших = **300 findings**
+- [x] Граф: 118 639 узлов, 196 453 рёбер → `data/graph.json`
+- [x] Docker: `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml`
+- [x] 6 коммитов, всё на GitHub
+- [x] Backend API работает на порту 8001
+- [x] Frontend работает на порту 3300
+- [x] `npm run build` — 0 ошибок TypeScript
 
-### День 2 (28 марта) — База данных + Эмбеддинги
-- [ ] Создание таблиц SQLite (documents, norms, cross_refs, findings)
-- [ ] Загрузка распарсенных данных в SQLite
-- [ ] `backend/app/pipeline/embedder.py` — эмбеддинги через Ollama nomic-embed-text
-- [ ] Индексация всех норм в ChromaDB
-- [ ] `backend/app/main.py` — FastAPI skeleton
-- [ ] `backend/app/api/stats.py` — `/api/stats`, `/api/health`
-- [ ] `backend/app/api/documents.py` — `/api/documents`
-- [ ] Frontend: `npx create-next-app`, shadcn/ui init
-- [ ] Frontend: layout (Sidebar, Header), Dashboard page с placeholder
+### День 2 (28 марта) — Противоречия + Граф оптимизация
+- [ ] Улучшить промпт противоречий (текущий слишком строгий: 0/50 проверок)
+- [ ] Перезапустить LLM-анализ с улучшенным промптом → найти реальные противоречия
+- [ ] Оптимизировать граф: оставить ~60 узлов (документы), убрать 118K (перекрёстные ссылки)
+- [ ] Добавить LLM-объяснения для дублирований (сейчас только cosine score)
+- [ ] Проверить frontend подключение к API (dashboard, graph, findings)
+- [ ] Fix: frontend CORS для порта 3300
+- [ ] Тестирование всех страниц с реальными данными
 
-### День 3 (29 марта) — Кластеризация + Граф + MVP Delivery
-- [ ] `backend/app/pipeline/clusterer.py` — UMAP + HDBSCAN
-- [ ] `backend/app/pipeline/graph_builder.py` — NetworkX из cross_refs
-- [ ] `backend/app/api/graph.py` — `/api/graph` endpoint
-- [ ] Frontend: `ForceGraph3D.tsx` — 3D-граф с реальными данными
-- [ ] Frontend: подключить Dashboard к `/api/stats`
-- [ ] Docker: `backend/Dockerfile`
+### День 3 (29 марта) — MVP Delivery + Сдача этапа #1
+- [ ] Fix все баги, найденные при тестировании
+- [ ] Docker compose up — проверить полный деплой
+- [ ] Обновить README с актуальными данными и портами
 - [ ] **Сдача этапа #1**: GitHub + архитектура + работающий MVP
 
 ---
 
 ## Фаза 2: Ядро анализа (Дни 4-7, 30 марта — 2 апреля)
 
-**Цель**: Полный pipeline анализа + интерактивный frontend. Сдача этапа #2.
+**Цель**: Качественные findings + интерактивный frontend. Сдача этапа #2.
 
-### День 4 (30 марта) — Дублирование + Противоречия
-- [ ] `backend/app/llm/client.py` — async Ollama клиент
-- [ ] `backend/app/llm/prompts.py` — промпты (противоречие, дублирование, устаревшие)
-- [ ] `backend/app/pipeline/dedup.py` — pairwise similarity > 0.85, LLM подтверждение
-- [ ] `backend/app/pipeline/contradiction.py` — LLM-as-Judge, structured JSON output
-- [ ] Запуск дублирования на всех кластерах
-- [ ] `backend/app/api/findings.py` — `/api/findings`
+### День 4 (30 марта) — Улучшение качества анализа
+- [ ] Расширить LLM-анализ: проверить больше пар на противоречия
+- [ ] Добавить duplication confirmation через LLM для топ-50 embedding-дублирований
+- [ ] Запуск полного анализа с улучшенными промптами
+- [ ] Генерация LLM-объяснений для каждого finding
 
-### День 5 (31 марта) — Устаревшие + Поиск + Сравнение
-- [ ] `backend/app/pipeline/outdated.py` — status + date + LLM check
-- [ ] Запуск полного анализа (dedup + contradiction + outdated)
-- [ ] `backend/app/api/search.py` — `/api/search` (семантический)
-- [ ] `backend/app/api/compare.py` — `/api/compare/{a}/{b}`
-- [ ] Frontend: `/findings` — список обнаружений с фильтрами
-- [ ] Frontend: `/findings/[id]` — NormComparison + AiExplanation
+### День 5 (31 марта) — Frontend интеграция
+- [ ] Подключить Dashboard к реальным данным /api/stats
+- [ ] Подключить 3D-граф к /api/graph (оптимизированный)
+- [ ] Подключить Findings к /api/findings с реальной пагинацией
+- [ ] Подключить Finding detail к /api/findings/:id
+- [ ] Тестирование SSE анализа (/analyze)
 
-### День 6 (1 апреля) — Frontend: Dashboard + Graph + Polish
-- [ ] Dashboard: подключить recharts (donut, bar, timeline)
-- [ ] Graph: цвета по типу, фильтры, клик по узлу → sidebar info
-- [ ] Graph: анимированные красные частицы на рёбрах-противоречиях
-- [ ] FindingCard: badges (тип, серьёзность, уверенность)
-- [ ] NormComparison: подсветка различий (word-level diff)
-- [ ] AiExplanation: карточка с объяснением + disclaimer
+### День 6 (1 апреля) — UI polish
+- [ ] Loading states, error states, empty states
+- [ ] Анимации перехода между страницами
+- [ ] Responsive layout для мобильных
+- [ ] Оптимизация 3D-графа (только документы, не все нормы)
 
-### День 7 (2 апреля) — Анализ в реалтайме + 2-й кластер
-- [ ] `backend/app/api/analyze.py` — `/api/analyze` (SSE)
-- [ ] Frontend: `/analyze` — загрузка текста + прогресс-бар + findings
-- [ ] (Опционально) Добавить 2-й кластер: Земельный кодекс + связанные
-- [ ] `backend/app/api/clusters.py` — `/api/clusters`
+### День 7 (2 апреля) — Сдача этапа #2
+- [ ] Финальное тестирование
+- [ ] Записать короткое демо-видео (3-5 мин)
+- [ ] Обновить README
 - [ ] **Сдача этапа #2**: GitHub + демо-видео + README
 
 ---
@@ -83,22 +99,16 @@
 **Цель**: Полировка, демо-видео, презентация, финальная сдача.
 
 ### День 8 (3 апреля) — Техническая экспертиза + Bug fix
-- [ ] Исправление багов, найденных при тестировании
-- [ ] Loading states, error states, empty states на всех страницах
-- [ ] Frontend: `/about` — методология (для критерия Explainability)
-- [ ] Frontend: `/documents` — браузер документов с деревом статей
-- [ ] Docker: `frontend/Dockerfile`, проверка `docker compose up`
+- [ ] Исправление багов
+- [ ] Frontend: `/about` — методология (Explainability)
+- [ ] Docker: финальная проверка `docker compose up`
 - [ ] Предгенерация демо-данных (`demo/seed_data.json`)
 
 ### День 9 (4 апреля) — Документация + Демо-видео
 - [ ] Обновить README: скриншоты, актуальные данные
-- [ ] Записать демо-видео (3-5 минут):
-  1. Dashboard с метриками
-  2. 3D-граф (вращение, клик по узлу)
-  3. Обнаружение противоречия (сравнение + объяснение)
-  4. Загрузка нового текста → анализ в реалтайме
+- [ ] Записать демо-видео (3-5 минут)
 - [ ] Создать презентацию (13 слайдов по docs/PRESENTATION.md)
-- [ ] UI polish: анимации, transitions, responsive
+- [ ] UI polish: финальные правки
 
 ### День 10 (5 апреля) — Финальная сдача (дедлайн 23:59)
 - [ ] Финальное тестирование Docker-деплоя
@@ -109,23 +119,39 @@
 
 ---
 
+## Текущие метрики (обновлено 27 марта)
+
+| Метрика | Значение |
+|---------|----------|
+| Документов | 59 |
+| Норм | 54 526 |
+| Перекрёстных ссылок | 870 514 |
+| Эмбеддингов (ChromaDB) | 54 526 (768-dim) |
+| Кластеров | 672 |
+| Findings: дублирования | 200 |
+| Findings: устаревшие | 100 |
+| Findings: противоречия | 0 (требует доработки промпта) |
+| Граф: узлы | 118 639 |
+| Граф: рёбра | 196 453 |
+| Backend файлов | 35+ Python |
+| Frontend файлов | 40+ TS/TSX |
+| Коммитов | 6 |
+
 ## Критический путь
 
 ```
-Парсинг (День 1) → Эмбеддинги (День 2) → Кластеризация (День 3)
-                                               │
-                              Анализ (Дни 4-5) → Frontend (Дни 6-7) → Polish (Дни 8-10)
+Парсинг → Эмбеддинги → Кластеризация → Анализ → Frontend → Polish
+(✅ 6 сек)  (✅ 8 мин)   (✅ 39 мин)    (✅ 12 мин) (✅ scaffold) (День 2+)
 ```
 
-**Блокер #1**: Парсер ДОЛЖЕН работать к концу Дня 1. Всё остальное зависит от данных.
-
-**Блокер #2**: Эмбеддинги ДОЛЖНЫ быть готовы к Дню 3. Без них нет кластеризации и анализа.
+**Блокер**: Противоречия = 0. Нужно улучшить промпт и стратегию выбора пар для LLM.
 
 ## Fallback-стратегия
 
 | Риск | Fallback |
 |------|----------|
-| adilet.zan.kz недоступен | Предзагруженный `demo/seed_data.json` |
-| LLM даёт плохие результаты | Только embedding-based дублирование (без LLM) |
-| Не хватает времени на frontend | Dashboard + Graph = достаточно для демо |
+| adilet.zan.kz недоступен | ✅ HTML закэширован в data/raw_html/ |
+| LLM даёт плохие результаты | ✅ Embedding-based дублирование работает без LLM |
+| Противоречия не находятся | Ослабить порог confidence, расширить промпт |
+| Не хватает времени на frontend | ✅ Все 9 страниц уже scaffold'ены |
 | Docker не работает у жюри | Демо-видео как backup |
