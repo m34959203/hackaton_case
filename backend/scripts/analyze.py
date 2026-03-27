@@ -93,11 +93,15 @@ async def run_pipeline() -> None:
 
     logger.info("В БД найдено %d норм для анализа", norms_count)
 
-    # Очищаем предыдущие findings
+    # Проверяем наличие findings
     async with get_db() as db:
-        await db.execute("DELETE FROM findings")
-        await db.commit()
-    logger.info("Предыдущие findings очищены")
+        cursor = await db.execute("SELECT COUNT(*) FROM findings")
+        row = await cursor.fetchone()
+        existing_findings = row[0] if row else 0
+    if existing_findings > 0:
+        logger.info("В БД уже %d findings, пропускаем анализ", existing_findings)
+    else:
+        logger.info("Findings не найдены, запускаем анализ")
 
     # ------------------------------------------------------------------
     # 1. Эмбеддинг
