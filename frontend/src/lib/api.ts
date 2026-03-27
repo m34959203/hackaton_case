@@ -1,0 +1,236 @@
+/**
+ * API-клиент для ZanAlytics backend.
+ */
+
+import type {
+  Document,
+  Finding,
+  FindingDetail,
+  GraphData,
+  HealthResponse,
+  PaginatedResponse,
+  StatsResponse,
+  AnalysisEvent,
+} from "@/lib/types";
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+/* ───────── Утилиты ───────── */
+
+/**
+ * Рекурсивно преобразует ключи объекта из snake_case в camelCase.
+ */
+function snakeToCamel(str: string): string {
+  return str.replace(/_([a-z])/g, (_, letter: string) =>
+    letter.toUpperCase(),
+  );
+}
+
+function transformKeys<T>(obj: unknown): T {
+  if (Array.isArray(obj)) {
+    return obj.map((item) => transformKeys(item)) as T;
+  }
+  if (obj !== null && typeof obj === "object") {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      result[snakeToCamel(key)] = transformKeys(value);
+    }
+    return result as T;
+  }
+  return obj as T;
+}
+
+/**
+ * Универсальный fetch-обёртка с преобразованием ключей.
+ */
+async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const url = `${API_BASE}${path}`;
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(
+      `API ${response.status}: ${response.statusText} — ${text}`,
+    );
+  }
+
+  const json: unknown = await response.json();
+  return transformKeys<T>(json);
+}
+
+/* ───────── Статистика ───────── */
+
+export function getStats(): Promise<StatsResponse> {
+  return apiFetch<StatsResponse>("/api/stats");
+}
+
+export function getHealth(): Promise<HealthResponse> {
+  return apiFetch<HealthResponse>("/api/health");
+}
+
+/* ───────── Документы ───────── */
+
+export function getDocuments(
+  page = 1,
+  limit = 20,
+): Promise<PaginatedResponse<Document>> {
+  return apiFetch<PaginatedResponse<Document>>(
+    `/api/documents?page=${page}&limit=${limit}`,
+  );
+}
+
+export function getDocument(id: string): Promise<Document> {
+  return apiFetch<Document>(`/api/documents/${encodeURIComponent(id)}`);
+}
+
+/* ───────── Обнаружения ───────── */
+
+interface FindingsParams {
+  page?: number;
+  limit?: number;
+  type?: string;
+  severity?: string;
+  domain?: string;
+}
+
+export function getFindings(
+  params: FindingsParams = {},
+): Promise<PaginatedResponse<Finding>> {
+  const query = new URLSearchParams();
+  query.set("page", String(params.page ?? 1));
+  query.set("limit", String(params.limit ?? 20));
+  if (params.type) query.set("type", params.type);
+  if (params.severity) query.set("severity", params.severity);
+  if (params.domain) query.set("domain", params.domain);
+  return apiFetch<PaginatedResponse<Finding>>(
+    `/api/findings?${query.toString()}`,
+  );
+}
+
+export function getFinding(id: number): Promise<FindingDetail> {
+  return apiFetch<FindingDetail>(`/api/findings/${id}`);
+}
+
+/* ───────── Граф ───────── */
+
+export function getGraph(): Promise<GraphData> {
+  return apiFetch<GraphData>("/api/graph");
+}
+
+/* ───────── Поиск ───────── */
+
+interface SearchParams {
+  query: string;
+  limit?: number;
+}
+
+export function search(
+  params: SearchParams,
+): Promise<PaginatedResponse<Finding>> {
+  const query = new URLSearchParams();
+  query.set("q", params.query);
+  if (params.limit) query.set("limit", String(params.limit));
+  return apiFetch<PaginatedResponse<Finding>>(
+    `/api/search?${query.toString()}`,
+  );
+}
+
+/* ───────── Сравнение ───────── */
+
+export function compare(
+  normAId: string,
+  normBId: string,
+): Promise<FindingDetail> {
+  return apiFetch<FindingDetail>(
+    `/api/compare?norm_a_id=${encodeURIComponent(normAId)}&norm_b_id=${encodeURIComponent(normBId)}`,
+  );
+}
+
+/* ───────── SSE анализ ───────── */
+
+/**
+ * Подключается к SSE-стриму анализа текста.
+ * Вызывает onEvent для каждого полученного события.
+ * Возвращает AbortController для отмены.
+ */
+export function analyzeText(
+  text: string,
+  onEvent: (event: AnalysisEvent) => void,
+): AbortController {
+  const controller = new AbortController();
+
+  const url = `${API_BASE}/api/analyze`;
+
+  fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+    signal: controller.signal,
+  })
+    .then(async (response) => {
+      if (!response.ok || !response.body) {
+        onEvent({
+          event: "error",
+          data: { message: `Ошибка: ${response.status} ${response.statusText}` },
+        });
+        return;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() ?? "";
+
+        for (const block of lines) {
+          if (!block.trim()) continue;
+
+          let eventType = "message";
+          let eventData = "";
+
+          for (const line of block.split("\n")) {
+            if (line.startsWith("event: ")) {
+              eventType = line.slice(7).trim();
+            } else if (line.startsWith("data: ")) {
+              eventData = line.slice(6);
+            }
+          }
+
+          if (eventData) {
+            try {
+              const parsed: unknown = JSON.parse(eventData);
+              onEvent({
+                event: eventType as AnalysisEvent["event"],
+                data: transformKeys(parsed),
+              });
+            } catch {
+              /* пропускаем невалидный JSON */
+            }
+          }
+        }
+      }
+    })
+    .catch((err: unknown) => {
+      if (err instanceof Error && err.name !== "AbortError") {
+        onEvent({
+          event: "error",
+          data: { message: err.message },
+        });
+      }
+    });
+
+  return controller;
+}

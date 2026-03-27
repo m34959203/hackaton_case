@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+aiosqlite
+aiohttp
+httpx
+beautifulsoup4
+lxml
+chromadb
+sentence-transformers
+umap-learn
+hdbscan
+scikit-learn
+networkx
+numpy
+ruff
