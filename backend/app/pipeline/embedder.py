@@ -97,7 +97,7 @@ class NormEmbedder:
         """
         # Получаем эмбеддинг исходной нормы
         result = self._collection.get(ids=[norm_id], include=["embeddings"])
-        if not result["embeddings"]:
+        if result["embeddings"] is None or len(result["embeddings"]) == 0:
             logger.warning("Норма %s не найдена в ChromaDB", norm_id)
             return []
 
@@ -157,7 +157,7 @@ class NormEmbedder:
             include=["embeddings"],
         )
 
-        if not result["embeddings"]:
+        if result["embeddings"] is None or len(result["embeddings"]) == 0:
             return []
 
         embeddings_map: dict[str, list[float]] = {}

@@ -149,7 +149,7 @@ class ContradictionDetector:
         Ограничивает количество пар для больших кластеров.
         """
         pairs: list[tuple[dict, dict]] = []
-        max_pairs = 50  # ограничение для контроля нагрузки на LLM
+        max_pairs = 5  # ограничение для контроля нагрузки на LLM (хакатон)
 
         for i in range(len(norms)):
             for j in range(i + 1, len(norms)):

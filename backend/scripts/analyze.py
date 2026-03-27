@@ -124,7 +124,25 @@ async def run_pipeline() -> None:
     logger.info("[2/6] Кластеризация норм...")
 
     clusterer = NormClusterer()
-    clusters = await clusterer.cluster_norms()
+    # Проверяем: если кластеры уже назначены — пропускаем
+    async with get_db() as db:
+        cursor = await db.execute("SELECT COUNT(DISTINCT cluster_id) FROM norms WHERE cluster_id IS NOT NULL")
+        row = await cursor.fetchone()
+        existing_clusters = row[0] if row else 0
+    if existing_clusters > 10:
+        logger.info("В БД уже %d кластеров, пропускаем кластеризацию", existing_clusters)
+        # Восстановить clusters dict из БД
+        async with get_db() as db:
+            cursor = await db.execute("SELECT cluster_id, id FROM norms WHERE cluster_id IS NOT NULL")
+            rows = await cursor.fetchall()
+        clusters: dict[int, list[str]] = {}
+        for row in rows:
+            cid = row[0]
+            if cid not in clusters:
+                clusters[cid] = []
+            clusters[cid].append(row[1])
+    else:
+        clusters = await clusterer.cluster_norms()
 
     logger.info(
         "[2/6] Кластеризация завершена за %.1f сек: %d кластеров",

@@ -67,11 +67,14 @@ class DuplicationDetector:
             if not high_sim_pairs:
                 continue
 
+            # Ограничиваем количество пар на кластер (топ-10 по сходству)
+            high_sim_pairs.sort(key=lambda x: x[2], reverse=True)
+            high_sim_pairs = high_sim_pairs[:10]
+
             logger.info(
-                "Кластер %d: %d пар с сходством >= %.2f",
+                "Кластер %d: %d пар для проверки LLM",
                 cluster_id,
                 len(high_sim_pairs),
-                threshold,
             )
 
             for norm_a_id, norm_b_id, score in high_sim_pairs:
