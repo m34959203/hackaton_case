@@ -4,10 +4,12 @@
 
 import type {
   Document,
+  DocumentDetail,
   Finding,
   FindingDetail,
   GraphData,
   HealthResponse,
+  Norm,
   PaginatedResponse,
   StatsResponse,
   AnalysisEvent,
@@ -77,17 +79,38 @@ export function getHealth(): Promise<HealthResponse> {
 
 /* ───────── Документы ───────── */
 
+interface DocumentsParams {
+  page?: number;
+  limit?: number;
+  domain?: string;
+  docType?: string;
+  status?: string;
+}
+
 export function getDocuments(
-  page = 1,
-  limit = 20,
+  params: DocumentsParams = {},
 ): Promise<PaginatedResponse<Document>> {
+  const query = new URLSearchParams();
+  query.set("page", String(params.page ?? 1));
+  query.set("limit", String(params.limit ?? 20));
+  if (params.domain) query.set("domain", params.domain);
+  if (params.docType) query.set("doc_type", params.docType);
+  if (params.status) query.set("status", params.status);
   return apiFetch<PaginatedResponse<Document>>(
-    `/api/documents?page=${page}&limit=${limit}`,
+    `/api/documents?${query.toString()}`,
   );
 }
 
-export function getDocument(id: string): Promise<Document> {
-  return apiFetch<Document>(`/api/documents/${encodeURIComponent(id)}`);
+export function getDocument(id: string): Promise<DocumentDetail> {
+  return apiFetch<DocumentDetail>(`/api/documents/${encodeURIComponent(id)}`);
+}
+
+export function getDocumentNorms(
+  docId: string,
+): Promise<{ items: Norm[]; total: number }> {
+  return apiFetch<{ items: Norm[]; total: number }>(
+    `/api/documents/${encodeURIComponent(docId)}/norms`,
+  );
 }
 
 /* ───────── Обнаружения ───────── */

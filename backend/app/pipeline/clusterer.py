@@ -43,7 +43,7 @@ class NormClusterer:
         ids = all_data["ids"]
         embeddings = all_data["embeddings"]
 
-        if not ids or not embeddings:
+        if not ids or embeddings is None or len(embeddings) == 0:
             logger.warning("Нет эмбеддингов для кластеризации")
             return {}
 

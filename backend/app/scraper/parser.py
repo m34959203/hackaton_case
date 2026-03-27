@@ -69,8 +69,12 @@ def parse_document(html: str, doc_id: str) -> DocumentCreate:
     # Статус
     status = _extract_status(soup)
 
-    # Текст документа
-    body_el = soup.select_one("div.container_gamma.text > article")
+    # Текст документа (пробуем несколько селекторов)
+    body_el = (
+        soup.select_one("div.container_gamma.text > article")
+        or soup.select_one("article")
+        or soup.select_one("div.text")
+    )
     body = _clean_text(body_el.get_text(separator="\n")) if body_el else ""
 
     # Тип документа

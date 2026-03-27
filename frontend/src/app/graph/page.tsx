@@ -1,24 +1,19 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import ForceGraph3DView from "@/components/graph/ForceGraph3D";
 
 export default function GraphPage() {
   return (
-    <div className="space-y-4">
-      <div>
+    <div className="flex flex-col h-[calc(100vh-5rem)]">
+      <div className="mb-2">
         <h1 className="text-2xl font-bold">Граф связей</h1>
         <p className="text-sm text-muted-foreground">
           3D-визуализация связей между нормативно-правовыми актами
         </p>
       </div>
-      <Card className="h-[calc(100vh-14rem)]">
-        <CardHeader>
-          <CardTitle className="text-sm">Интерактивный граф</CardTitle>
-        </CardHeader>
-        <CardContent className="flex h-full items-center justify-center">
-          <p className="text-muted-foreground">
-            Граф будет подключён (react-force-graph-3d)
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex-1 rounded-lg border border-border overflow-hidden">
+        <ForceGraph3DView />
+      </div>
     </div>
   );
 }

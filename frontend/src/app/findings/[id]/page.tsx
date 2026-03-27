@@ -1,38 +1,117 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
 
-export default async function FindingDetailPage({
+import { use } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getFinding } from "@/lib/api";
+import { typeColor, severityColor, typeLabel, formatDate } from "@/lib/utils";
+import NormComparison from "@/components/findings/NormComparison";
+import AiExplanation from "@/components/findings/AiExplanation";
+import { ArrowLeft, Flag } from "lucide-react";
+import { useState } from "react";
+
+export default function FindingDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id } = use(params);
+  const router = useRouter();
+  const [reported, setReported] = useState(false);
+
+  const { data: finding, isLoading } = useQuery({
+    queryKey: ["finding", id],
+    queryFn: () => getFinding(Number(id)),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Skeleton className="h-48" />
+          <Skeleton className="h-48" />
+        </div>
+        <Skeleton className="h-32" />
+      </div>
+    );
+  }
+
+  if (!finding) {
+    return (
+      <div className="flex h-64 items-center justify-center text-muted-foreground">
+        Обнаружение не найдено
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Заголовок */}
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => router.push("/findings")}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+            <h1 className="text-2xl font-bold">
+              Обнаружение #{finding.id}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge className={typeColor(finding.type)}>
+              {typeLabel(finding.type)}
+            </Badge>
+            <Badge className={severityColor(finding.severity)}>
+              {typeLabel(finding.severity)}
+            </Badge>
+            {finding.clusterTopic && (
+              <span className="text-xs text-muted-foreground">
+                Кластер: {finding.clusterTopic}
+              </span>
+            )}
+            {finding.createdAt && (
+              <span className="text-xs text-muted-foreground">
+                {formatDate(finding.createdAt)}
+              </span>
+            )}
+          </div>
+        </div>
+        <Button
+          variant={reported ? "secondary" : "destructive"}
+          size="sm"
+          onClick={() => setReported(true)}
+          disabled={reported}
+        >
+          <Flag className="mr-1.5 size-3.5" />
+          {reported ? "Отмечено" : "Неверное обнаружение"}
+        </Button>
+      </div>
+
+      {/* Сравнение норм */}
       <div>
-        <h1 className="text-2xl font-bold">Обнаружение #{id}</h1>
-        <p className="text-sm text-muted-foreground">
-          Детали обнаружения с объяснением ИИ
-        </p>
+        <h2 className="mb-3 text-lg font-semibold">Сравнение норм</h2>
+        <NormComparison
+          normA={finding.normA}
+          normB={finding.normB}
+          type={finding.type}
+        />
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Сравнение норм</CardTitle>
-          </CardHeader>
-          <CardContent className="flex h-48 items-center justify-center">
-            <p className="text-muted-foreground">NormComparison</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Объяснение ИИ</CardTitle>
-          </CardHeader>
-          <CardContent className="flex h-48 items-center justify-center">
-            <p className="text-muted-foreground">AiExplanation</p>
-          </CardContent>
-        </Card>
-      </div>
+
+      {/* Объяснение ИИ */}
+      <AiExplanation
+        explanation={finding.explanation}
+        recommendation={finding.recommendation}
+        confidence={finding.confidence}
+      />
     </div>
   );
 }

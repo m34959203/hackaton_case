@@ -9,7 +9,8 @@ from app.models.document import Norm
 
 logger = logging.getLogger(__name__)
 
-BATCH_SIZE = 50
+BATCH_SIZE = 20
+MAX_TEXT_LENGTH = 2000  # nomic-embed-text: ограничение по токенам
 
 
 class NormEmbedder:
@@ -33,7 +34,7 @@ class NormEmbedder:
 
         for i in range(0, total, BATCH_SIZE):
             batch = norms[i : i + BATCH_SIZE]
-            texts = [n.text for n in batch]
+            texts = [n.text[:MAX_TEXT_LENGTH] for n in batch]
             ids = [n.id for n in batch]
             metadatas = [
                 {

@@ -1,6 +1,59 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import { useState, useCallback, useRef } from "react";
+import { analyzeText } from "@/lib/api";
+import type {
+  AnalysisProgressData,
+  AnalysisCompleteData,
+  AnalysisErrorData,
+  Finding,
+} from "@/lib/types";
+import AnalysisForm from "@/components/analyze/AnalysisForm";
+import AnalysisProgress from "@/components/analyze/AnalysisProgress";
+import AnalysisResults from "@/components/analyze/AnalysisResults";
 
 export default function AnalyzePage() {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [steps, setSteps] = useState<AnalysisProgressData[]>([]);
+  const [findings, setFindings] = useState<Finding[]>([]);
+  const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const controllerRef = useRef<AbortController | null>(null);
+
+  const handleSubmit = useCallback((text: string) => {
+    /* Сброс состояния */
+    setIsAnalyzing(true);
+    setSteps([]);
+    setFindings([]);
+    setIsComplete(false);
+    setError(null);
+
+    const controller = analyzeText(text, (event) => {
+      switch (event.event) {
+        case "progress":
+          setSteps((prev) => [...prev, event.data as AnalysisProgressData]);
+          break;
+        case "finding":
+          setFindings((prev) => [...prev, event.data as Finding]);
+          break;
+        case "complete": {
+          const _complete = event.data as AnalysisCompleteData;
+          setIsComplete(true);
+          setIsAnalyzing(false);
+          break;
+        }
+        case "error": {
+          const err = event.data as AnalysisErrorData;
+          setError(err.message);
+          setIsAnalyzing(false);
+          break;
+        }
+      }
+    });
+
+    controllerRef.current = controller;
+  }, []);
+
   return (
     <div className="space-y-4">
       <div>
@@ -9,16 +62,16 @@ export default function AnalyzePage() {
           Загрузите текст нормативного акта для анализа в реальном времени
         </p>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Загрузка текста</CardTitle>
-        </CardHeader>
-        <CardContent className="flex h-64 items-center justify-center">
-          <p className="text-muted-foreground">
-            Форма загрузки + SSE-прогресс будут подключены
-          </p>
-        </CardContent>
-      </Card>
+
+      <AnalysisForm onSubmit={handleSubmit} isAnalyzing={isAnalyzing} />
+
+      <AnalysisProgress
+        steps={steps}
+        isComplete={isComplete}
+        error={error}
+      />
+
+      <AnalysisResults findings={findings} />
     </div>
   );
 }

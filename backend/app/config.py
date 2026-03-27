@@ -11,10 +11,10 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "qwen2.5:14b"
     OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
 
-    # Хранилища
-    DB_PATH: str = "backend/data/zandb.sqlite"
-    CHROMA_PATH: str = "backend/data/chroma"
-    RAW_HTML_PATH: str = "backend/data/raw_html"
+    # Хранилища (относительно backend/)
+    DB_PATH: str = "data/zandb.sqlite"
+    CHROMA_PATH: str = "data/chroma"
+    RAW_HTML_PATH: str = "data/raw_html"
 
     # Парсер adilet.zan.kz
     ADILET_BASE_URL: str = "https://adilet.zan.kz"

@@ -38,6 +38,10 @@ export interface NormBrief {
   text: string;
 }
 
+export interface DocumentDetail extends Document {
+  norms: NormBrief[];
+}
+
 export interface CrossRef {
   id: number;
   fromDoc: string;
@@ -77,16 +81,18 @@ export interface FindingDetail {
 
 export interface GraphNode {
   id: string;
-  label: string;
-  type: string;
-  domain: string | null;
-  findingsCount: number;
+  name: string;
+  group: string | null;
+  val: number;
+  color: string | null;
 }
 
 export interface GraphLink {
   source: string;
   target: string;
-  type: "contradiction" | "duplication" | "reference";
+  type: string | null;
+  color: string | null;
+  value: number;
 }
 
 export interface GraphData {
@@ -96,25 +102,41 @@ export interface GraphData {
 
 /* ───────── Статистика и здоровье ───────── */
 
-export interface StatsResponse {
-  documentsCount: number;
+export interface DomainStat {
+  domain: string;
+  docsCount: number;
   normsCount: number;
   findingsCount: number;
-  contradictions: number;
-  duplications: number;
-  outdated: number;
-  highSeverity: number;
-  mediumSeverity: number;
-  lowSeverity: number;
-  domains: Record<string, number>;
-  avgConfidence: number;
+}
+
+export interface FindingTypeStat {
+  type: string;
+  count: number;
+}
+
+export interface FindingSeverityStat {
+  severity: string;
+  count: number;
+}
+
+export interface StatsResponse {
+  totalDocuments: number;
+  totalNorms: number;
+  totalFindings: number;
+  findingsByType: FindingTypeStat[];
+  findingsBySeverity: FindingSeverityStat[];
+  topDomains: DomainStat[];
+}
+
+export interface ServiceStatus {
+  name: string;
+  status: string;
+  detail: string | null;
 }
 
 export interface HealthResponse {
   status: string;
-  ollama: boolean;
-  chromadb: boolean;
-  sqlite: boolean;
+  services: ServiceStatus[];
 }
 
 /* ───────── Пагинация ───────── */
