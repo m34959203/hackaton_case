@@ -29,7 +29,7 @@ class FindingListResponse(BaseModel):
 # --- Эндпоинты ---
 
 
-@router.get("/", response_model=FindingListResponse)
+@router.get("", response_model=FindingListResponse)
 async def list_findings(
     page: int = Query(1, ge=1, description="Номер страницы"),
     limit: int = Query(20, ge=1, le=100, description="Размер страницы"),

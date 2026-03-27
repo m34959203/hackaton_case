@@ -54,7 +54,7 @@ class GraphResponse(BaseModel):
 # --- Эндпоинт ---
 
 
-@router.get("/", response_model=GraphResponse)
+@router.get("", response_model=GraphResponse)
 async def get_graph() -> GraphResponse:
     """Получить полный граф связей из кэш-файла graph.json.
 

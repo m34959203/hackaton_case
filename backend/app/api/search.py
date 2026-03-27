@@ -38,7 +38,7 @@ class SearchResponse(BaseModel):
 # --- Эндпоинт ---
 
 
-@router.get("/", response_model=SearchResponse)
+@router.get("", response_model=SearchResponse)
 async def semantic_search(
     q: str = Query(..., min_length=2, description="Текст запроса для поиска"),
     limit: int = Query(20, ge=1, le=100, description="Максимум результатов"),

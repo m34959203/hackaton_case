@@ -173,7 +173,7 @@ async def _analysis_stream(text: str):
 # --- Эндпоинт ---
 
 
-@router.post("/")
+@router.post("")
 async def analyze_text(request: AnalyzeRequest) -> StreamingResponse:
     """Анализ текста нормы с потоковой передачей прогресса через SSE.
 

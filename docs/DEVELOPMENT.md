@@ -45,20 +45,18 @@ hackaton_case/
 ```bash
 cd backend
 
-# Создать виртуальное окружение
-python -m venv .venv
-source .venv/bin/activate
+# Активировать conda-окружение (Python 3.12)
+conda activate zan
+# Python: /home/ubuntu/miniconda3/envs/zan/bin/python
 
 # Установить зависимости
-pip install -e ".[dev]"
+pip install -r requirements.txt
 
-# Настроить переменные
-cp ../.env.example .env
-# Отредактировать .env
-
-# Запустить
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Запустить API (порт 8001, т.к. 8000 занят на сервере)
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 ```
+
+> **Важно**: на dev-сервере порт 8000 занят другим сервисом. Backend запускается на **8001**.
 
 ### 2. Frontend
 
@@ -68,9 +66,13 @@ cd frontend
 # Установить зависимости
 npm install
 
-# Запустить dev server
-npm run dev -- -p 3100
+# Запустить dev server (порт 3300, т.к. 3100 занят)
+npm run dev
+# Откроется на http://localhost:3300
 ```
+
+> **Важно**: порт 3100 занят. Frontend настроен на **3300** (см. `package.json` → `dev` скрипт).
+> `NEXT_PUBLIC_API_URL` должен указывать на `http://localhost:8001` при локальной разработке.
 
 ### 3. Ollama
 
@@ -107,15 +109,18 @@ docker compose up -d backend
 ## Makefile
 
 ```bash
-make setup      # Первоначальная настройка (модели + парсинг + анализ)
-make dev        # Запуск всех сервисов для разработки
+make setup      # Первый запуск: scrape + analyze
+make dev        # Запуск backend (8001) + frontend (3300) для разработки
+make docker     # Сборка Docker-образов и запуск контейнеров
 make scrape     # Парсинг документов с adilet.zan.kz
-make embed      # Генерация эмбеддингов
-make analyze    # Запуск анализа (дублирование + противоречия + устаревшие)
-make demo       # Загрузка демо-данных + запуск
-make test       # Запуск тестов
+make analyze    # Полный анализ (эмбеддинги + кластеризация + findings)
+make embed      # Генерация эмбеддингов (алиас для analyze)
+make stop       # Остановка Docker контейнеров
+make logs       # Логи Docker контейнеров
+make test       # Запуск тестов (pytest)
 make lint       # Проверка кода (ruff + eslint)
 make format     # Форматирование (ruff format + prettier)
+make clean      # Очистка данных (SQLite, ChromaDB, raw HTML, .next)
 ```
 
 ## Скрипты CLI
@@ -124,41 +129,31 @@ make format     # Форматирование (ruff format + prettier)
 
 ```bash
 cd backend
+conda activate zan
 
-# Парсинг всех документов из seed-списка
-python -m scripts.scrape --all
+# Парсинг всех 59 документов из seed-списка (кэш в data/raw_html/)
+python -m scripts.scrape
 
-# Парсинг конкретного документа
-python -m scripts.scrape --doc K1500000414
-
-# Парсинг с расширением по ссылкам
-python -m scripts.scrape --doc K1500000414 --follow-links --depth 1
+# Быстрый анализ (эмбеддинги + дублирование + устаревшие)
+python -m scripts.quick_analyze
 ```
 
-### Генерация эмбеддингов
+### Перезапуск сервисов
 
 ```bash
-# Все нормы
-python -m scripts.process --embed
+# Backend: перезапуск (Ctrl+C и заново)
+cd backend && conda activate zan
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
 
-# С кластеризацией
-python -m scripts.process --embed --cluster
-```
+# Frontend: перезапуск
+cd frontend
+npm run dev
 
-### Анализ
+# Docker: перезапуск
+docker compose down && docker compose up -d
 
-```bash
-# Полный анализ
-python -m scripts.analyze --all
-
-# Только дублирование
-python -m scripts.analyze --dedup
-
-# Только противоречия
-python -m scripts.analyze --contradictions
-
-# Только устаревшие
-python -m scripts.analyze --outdated
+# Проверка здоровья
+curl http://localhost:8001/api/health
 ```
 
 ## Переменные окружения
@@ -173,7 +168,7 @@ python -m scripts.analyze --outdated
 | `SCRAPE_RATE_LIMIT` | Запросов в секунду | `2` |
 | `SIMILARITY_THRESHOLD` | Порог дублирования | `0.85` |
 | `CONTRADICTION_CONFIDENCE` | Мин. уверенность | `0.7` |
-| `NEXT_PUBLIC_API_URL` | URL API для frontend | `http://localhost:8000` |
+| `NEXT_PUBLIC_API_URL` | URL API для frontend | `http://localhost:8001` (dev) / `http://localhost:8000` (Docker) |
 
 ## Тестирование
 

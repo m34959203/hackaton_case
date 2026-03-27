@@ -32,26 +32,30 @@ ZanAlytics — AI-система, которая:
 | Норм извлечено | 54 526 |
 | Перекрёстных ссылок | 870 514 |
 | Тематических кластеров | 672 |
+| **Всего обнаружений** | **306** |
+| Обнаружено противоречий | 6 |
 | Обнаружено дублирований | 200 |
 | Обнаружено устаревших норм | 100 |
-| Узлов в графе | 118 639 |
-| Рёбер в графе | 196 453 |
+| Узлов в графе | 59 (документы) |
+| Рёбер в графе | 171 (перекрёстные ссылки) |
 
 ## Архитектура
 
 ```
-┌─────────────────────────────────┐
-│     Frontend (Next.js :3300)    │
-│  3D-граф • Дашборд • Сравнение  │
-└──────────────┬──────────────────┘
+┌─────────────────────────────────────┐
+│     Frontend (Next.js)              │
+│  :3300 (dev) / :3100 (Docker)       │
+│  3D-граф • Дашборд • Сравнение      │
+└──────────────┬──────────────────────┘
                │ REST API + SSE
-┌──────────────▼──────────────────┐
-│     Backend (FastAPI :8001)     │
-│  Scraper • NLP Pipeline • API   │
-├──────┬────────┬─────────────────┤
-│Ollama│ChromaDB│     SQLite      │
-│:11434│embedded│   (metadata)    │
-└──────┴────────┴─────────────────┘
+┌──────────────▼──────────────────────┐
+│     Backend (FastAPI)               │
+│  :8001 (dev) / :8000 (Docker)       │
+│  Scraper • NLP Pipeline • API       │
+├──────┬────────┬─────────────────────┤
+│Ollama│ChromaDB│     SQLite          │
+│:11434│embedded│   (metadata)        │
+└──────┴────────┴─────────────────────┘
 ```
 
 ### Стек технологий
@@ -87,7 +91,7 @@ ZanAlytics — AI-система, которая:
     ▼
 4. Анализ внутри кластеров:
     ├── Cosine similarity ≥ 0.92 → ДУБЛИРОВАНИЕ (200 находок)
-    ├── LLM-as-Judge → ПРОТИВОРЕЧИЕ (в разработке)
+    ├── LLM-as-Judge → ПРОТИВОРЕЧИЕ (6 находок)
     └── Статус документа → УСТАРЕВШИЕ НОРМЫ (100 находок)
     │
     ▼
@@ -126,22 +130,38 @@ open http://localhost:3300
 ### Запуск для разработки
 
 ```bash
-# Backend (требуется conda или venv с Python 3.12)
+# Backend (conda-окружение "zan")
 cd backend
-conda activate zan  # или: python -m venv .venv && source .venv/bin/activate
+conda activate zan
 pip install -r requirements.txt
 
-# Инициализация и парсинг
+# Инициализация и парсинг (если данные ещё не загружены)
 python -m scripts.scrape
 python -m scripts.quick_analyze
 
-# Запуск API
-uvicorn app.main:app --host 0.0.0.0 --port 8001
+# Запуск API (порт 8001, т.к. 8000 занят на сервере)
+uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
-# Frontend (в отдельном терминале)
+# Frontend (в отдельном терминале, порт 3300, т.к. 3100 занят)
 cd frontend
 npm install
-npm run dev  # порт 3300
+npm run dev  # http://localhost:3300
+```
+
+> **Примечание**: на dev-сервере порты 8000 и 3100 заняты другими сервисами,
+> поэтому backend работает на **8001**, frontend на **3300**.
+> В Docker используются стандартные порты: backend **8000**, frontend **3100**.
+
+### Makefile
+
+```bash
+make dev        # Запуск backend + frontend для разработки
+make docker     # Сборка и запуск через Docker Compose
+make scrape     # Парсинг документов с adilet.zan.kz
+make analyze    # Полный анализ (эмбеддинги + кластеризация + findings)
+make setup      # Первый запуск: scrape + analyze
+make stop       # Остановка Docker контейнеров
+make clean      # Очистка данных (SQLite, ChromaDB, raw HTML)
 ```
 
 ## Страницы

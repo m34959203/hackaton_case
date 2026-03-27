@@ -122,7 +122,7 @@ export function getFinding(id: number): Promise<FindingDetail> {
 /* ───────── Граф ───────── */
 
 export function getGraph(): Promise<GraphData> {
-  return apiFetch<GraphData>("/api/graph/");
+  return apiFetch<GraphData>("/api/graph");
 }
 
 /* ───────── Поиск ───────── */

@@ -43,7 +43,7 @@ class NormListResponse(BaseModel):
 # --- Эндпоинты ---
 
 
-@router.get("/", response_model=DocumentListResponse)
+@router.get("", response_model=DocumentListResponse)
 async def list_documents(
     page: int = Query(1, ge=1, description="Номер страницы"),
     limit: int = Query(20, ge=1, le=100, description="Размер страницы"),
