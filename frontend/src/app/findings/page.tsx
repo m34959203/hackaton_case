@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getFindings } from "@/lib/api";
 import FindingsTable from "@/components/findings/FindingsTable";
 import FindingsFilters from "@/components/findings/FindingsFilters";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
 export default function FindingsPage() {
   const [page, setPage] = useState(1);
@@ -36,12 +36,17 @@ export default function FindingsPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Обнаружения</h1>
-        <p className="text-sm text-muted-foreground">
-          Список выявленных противоречий, дублирований и устаревших норм
-        </p>
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <div className="rounded-xl bg-gradient-to-br from-[#1E3A8A] to-[#1E40AF] p-2.5 shadow-lg shadow-blue-900/20">
+          <Search className="size-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Обнаружения</h1>
+          <p className="text-sm text-muted-foreground">
+            Список выявленных противоречий, дублирований и устаревших норм
+          </p>
+        </div>
       </div>
 
       <FindingsFilters
@@ -59,7 +64,7 @@ export default function FindingsPage() {
       />
 
       {error && (
-        <Card>
+        <Card className="border-destructive/20">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground">Не удалось загрузить обнаружения</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
@@ -92,16 +97,17 @@ export default function FindingsPage() {
 
       {/* Пагинация */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-3">
           <Button
             variant="outline"
             size="icon-sm"
             disabled={page <= 1}
             onClick={() => setPage((p) => p - 1)}
+            className="transition-all duration-150 hover:bg-[#1E3A8A]/10"
           >
             <ChevronLeft className="size-4" />
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm tabular-nums text-muted-foreground">
             {page} / {totalPages}
           </span>
           <Button
@@ -109,6 +115,7 @@ export default function FindingsPage() {
             size="icon-sm"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
+            className="transition-all duration-150 hover:bg-[#1E3A8A]/10"
           >
             <ChevronRight className="size-4" />
           </Button>

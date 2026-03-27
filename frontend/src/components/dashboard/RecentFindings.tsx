@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { getFindings } from "@/lib/api";
 import { typeLabel, typeColor, severityColor, confidencePercent } from "@/lib/utils";
+import Link from "next/link";
 
 /** Список последних 5 обнаружений. */
 export default function RecentFindings() {
@@ -24,10 +25,10 @@ export default function RecentFindings() {
         <CardContent className="space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <Skeleton className="h-8 w-8 rounded" />
+              <Skeleton className="h-8 w-8 rounded-lg bg-[#1E3A8A]/10" />
               <div className="flex-1 space-y-1">
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-4 w-3/4 bg-[#1E3A8A]/10" />
+                <Skeleton className="h-3 w-1/2 bg-[#1E3A8A]/10" />
               </div>
             </div>
           ))}
@@ -75,11 +76,12 @@ export default function RecentFindings() {
       </CardHeader>
       <CardContent className="space-y-3">
         {findings.map((f) => (
-          <div
+          <Link
             key={f.id}
-            className="flex items-start gap-3 rounded-lg border border-border p-3"
+            href={`/findings/${f.id}`}
+            className="block rounded-lg border border-border/50 p-3 transition-all duration-150 hover:bg-muted/30 hover:border-border hover:shadow-sm"
           >
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className={typeColor(f.type)}>
                   {typeLabel(f.type)}
@@ -87,7 +89,7 @@ export default function RecentFindings() {
                 <Badge variant="outline" className={severityColor(f.severity)}>
                   {typeLabel(f.severity)}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs tabular-nums text-muted-foreground">
                   {confidencePercent(f.confidence)}
                 </span>
               </div>
@@ -97,12 +99,12 @@ export default function RecentFindings() {
               {f.norm_a && (
                 <p className="text-xs text-muted-foreground truncate">
                   Ст. {f.norm_a.article}
-                  {f.norm_a.paragraph ? `, п. ${f.norm_a.paragraph}` : ""} —{" "}
+                  {f.norm_a.paragraph ? `, п. ${f.norm_a.paragraph}` : ""} --{" "}
                   {f.norm_a.text.slice(0, 100)}...
                 </p>
               )}
             </div>
-          </div>
+          </Link>
         ))}
       </CardContent>
     </Card>

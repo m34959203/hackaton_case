@@ -24,11 +24,11 @@ export default function NormComparison({
   doc_b_title,
 }: NormComparisonProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {/* Норма A */}
-      <Card className="border-l-4 border-l-blue-500 border-blue-500/20">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      {/* Норма A -- Navy accent */}
+      <Card className="border-l-4 border-l-[#1E3A8A] border-[#1E3A8A]/20 transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-blue-400">
+          <CardTitle className="text-sm font-semibold text-blue-500">
             Норма A
           </CardTitle>
           {doc_a_title && (
@@ -42,7 +42,7 @@ export default function NormComparison({
           </p>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md bg-blue-500/5 p-3">
+          <div className="rounded-lg bg-[#1E3A8A]/5 p-3.5 border border-[#1E3A8A]/10">
             <p className="whitespace-pre-wrap text-sm leading-relaxed">
               {normA.text}
             </p>
@@ -50,11 +50,11 @@ export default function NormComparison({
         </CardContent>
       </Card>
 
-      {/* Норма B */}
+      {/* Норма B -- Gold accent */}
       {normB ? (
-        <Card className="border-l-4 border-l-orange-500 border-orange-500/20">
+        <Card className="border-l-4 border-l-amber-600 border-amber-600/20 transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold text-orange-400">
+            <CardTitle className="text-sm font-semibold text-amber-500">
               Норма B
             </CardTitle>
             {doc_b_title && (
@@ -68,7 +68,7 @@ export default function NormComparison({
             </p>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md bg-orange-500/5 p-3">
+            <div className="rounded-lg bg-amber-500/5 p-3.5 border border-amber-500/10">
               <p className="whitespace-pre-wrap text-sm leading-relaxed">
                 {normB.text}
               </p>
@@ -76,7 +76,7 @@ export default function NormComparison({
           </CardContent>
         </Card>
       ) : (
-        <Card className="flex items-center justify-center border-dashed">
+        <Card className="flex items-center justify-center border-dashed border-border/50">
           <CardContent className="py-8 text-center text-muted-foreground">
             {type === "outdated"
               ? "Для устаревших норм вторая норма не применяется"

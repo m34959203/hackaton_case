@@ -31,13 +31,13 @@ export default function FindingDetailPage({
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Skeleton className="h-48" />
-          <Skeleton className="h-48" />
+      <div className="space-y-5">
+        <Skeleton className="h-8 w-64 bg-[#1E3A8A]/10" />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <Skeleton className="h-48 bg-[#1E3A8A]/10" />
+          <Skeleton className="h-48 bg-[#1E3A8A]/10" />
         </div>
-        <Skeleton className="h-32" />
+        <Skeleton className="h-32 bg-[#1E3A8A]/10" />
       </div>
     );
   }
@@ -71,12 +71,13 @@ export default function FindingDetailPage({
               variant="ghost"
               size="sm"
               onClick={() => router.push("/findings")}
+              className="transition-all duration-150 hover:bg-[#1E3A8A]/10"
             >
               <ArrowLeft className="mr-1 size-4" />
               Назад
             </Button>
           </div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold tracking-tight">
             Обнаружение #{finding.id}
           </h1>
 
@@ -107,6 +108,7 @@ export default function FindingDetailPage({
           size="sm"
           onClick={() => setReported(true)}
           disabled={reported}
+          className="transition-all duration-150"
         >
           <Flag className="mr-1.5 size-3.5" />
           {reported ? "Отмечено" : "Неверное обнаружение"}
@@ -115,7 +117,7 @@ export default function FindingDetailPage({
 
       {/* Сравнение норм */}
       <div>
-        <h2 className="mb-3 text-lg font-semibold">Сравнение норм</h2>
+        <h2 className="mb-3 text-lg font-semibold tracking-tight">Сравнение норм</h2>
         <NormComparison
           norm_a={finding.norm_a}
           norm_b={finding.norm_b}

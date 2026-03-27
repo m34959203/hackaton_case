@@ -14,9 +14,9 @@ import type { FindingSeverityStat } from "@/lib/types";
 import { typeLabel } from "@/lib/utils";
 
 const SEVERITY_COLORS: Record<string, string> = {
-  high: "#ef4444",
-  medium: "#f59e0b",
-  low: "#22c55e",
+  high: "#DC2626",
+  medium: "#D97706",
+  low: "#059669",
 };
 
 interface SeverityChartProps {
@@ -33,7 +33,7 @@ export default function SeverityChart({ data }: SeverityChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <Card>
+      <Card className="transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
         <CardHeader>
           <CardTitle className="text-sm">По серьёзности</CardTitle>
         </CardHeader>
@@ -45,7 +45,7 @@ export default function SeverityChart({ data }: SeverityChartProps) {
   }
 
   return (
-    <Card>
+    <Card className="transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
       <CardHeader>
         <CardTitle className="text-sm">По серьёзности</CardTitle>
       </CardHeader>
@@ -54,24 +54,25 @@ export default function SeverityChart({ data }: SeverityChartProps) {
           <BarChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
             <XAxis
               dataKey="name"
-              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
             />
             <YAxis
-              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
               allowDecimals={false}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                color: "hsl(var(--card-foreground))",
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "10px",
+                color: "var(--card-foreground)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
               formatter={(value) => [String(value), "Обнаружений"]}
             />
-            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+            <Bar dataKey="value" radius={[6, 6, 0, 0]}>
               {chartData.map((entry, i) => (
-                <Cell key={i} fill={SEVERITY_COLORS[entry.severity] ?? "#a1a1aa"} />
+                <Cell key={i} fill={SEVERITY_COLORS[entry.severity] ?? "#94A3B8"} />
               ))}
             </Bar>
           </BarChart>

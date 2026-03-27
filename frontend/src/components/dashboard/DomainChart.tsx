@@ -28,7 +28,7 @@ export default function DomainChart({ data }: DomainChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <Card>
+      <Card className="transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
         <CardHeader>
           <CardTitle className="text-sm">Топ доменов по обнаружениям</CardTitle>
         </CardHeader>
@@ -40,7 +40,7 @@ export default function DomainChart({ data }: DomainChartProps) {
   }
 
   return (
-    <Card>
+    <Card className="transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
       <CardHeader>
         <CardTitle className="text-sm">Топ доменов по нормам</CardTitle>
       </CardHeader>
@@ -51,28 +51,29 @@ export default function DomainChart({ data }: DomainChartProps) {
             layout="vertical"
             margin={{ left: 20, right: 20, top: 5, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-            <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} />
+            <XAxis type="number" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} />
             <YAxis
               type="category"
               dataKey="domain"
               width={180}
-              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+              tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "hsl(var(--card))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                color: "hsl(var(--card-foreground))",
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "10px",
+                color: "var(--card-foreground)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
               }}
               formatter={(value, name) => {
                 const label = name === "findings" ? "Обнаружений" : "Норм";
                 return [String(value), label];
               }}
             />
-            <Bar dataKey="norms" fill="#6366f1" radius={[0, 4, 4, 0]} name="norms" />
-            <Bar dataKey="findings" fill="#ef4444" radius={[0, 4, 4, 0]} name="findings" />
+            <Bar dataKey="norms" fill="#1E3A8A" radius={[0, 6, 6, 0]} name="norms" />
+            <Bar dataKey="findings" fill="#D97706" radius={[0, 6, 6, 0]} name="findings" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

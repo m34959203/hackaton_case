@@ -16,20 +16,20 @@ const ForceGraph = dynamic(() => import("react-force-graph-3d"), {
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
-/* Цвета узлов по типу документа */
+/* Цвета узлов по типу документа (Legal palette) */
 const NODE_COLORS: Record<string, string> = {
-  code: "#4f46e5",
-  law: "#16a34a",
+  code: "#3B82F6",
+  law: "#059669",
   decree: "#9333ea",
-  resolution: "#6b7280",
-  order: "#f97316",
+  resolution: "#64748B",
+  order: "#D97706",
 };
 
-/* Цвета рёбер по типу связи */
+/* Цвета рёбер по типу связи (Legal palette) */
 const EDGE_COLORS: Record<string, string> = {
-  contradiction: "#ef4444",
-  duplication: "#f97316",
-  reference: "#d1d5db",
+  contradiction: "#DC2626",
+  duplication: "#D97706",
+  reference: "#94A3B8",
 };
 
 /** Основной 3D-граф связей между документами. */
@@ -164,7 +164,7 @@ export default function ForceGraph3DView() {
         width={dimensions.width}
         height={dimensions.height}
         graphData={filteredGraph}
-        backgroundColor="#09090b"
+        backgroundColor="#020617"
         nodeId="id"
         nodeLabel="name"
         nodeVal="val"

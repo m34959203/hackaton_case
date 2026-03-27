@@ -10,39 +10,39 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
-/** Цвет по серьёзности обнаружения. */
+/** Цвет по серьёзности обнаружения (Legal palette). */
 export function severityColor(severity: string): string {
   switch (severity) {
     case "high":
-      return "text-red-500 bg-red-500/10 border-red-500/30";
+      return "text-red-600 bg-red-500/10 border-red-500/30";
     case "medium":
-      return "text-amber-500 bg-amber-500/10 border-amber-500/30";
+      return "text-amber-600 bg-amber-500/10 border-amber-500/30";
     case "low":
-      return "text-emerald-500 bg-emerald-500/10 border-emerald-500/30";
+      return "text-emerald-600 bg-emerald-500/10 border-emerald-500/30";
     default:
       return "text-muted-foreground bg-muted";
   }
 }
 
-/** Цвет по типу документа (для графа и бэйджей). */
+/** Цвет по типу документа (Legal palette — navy/gold/slate). */
 export function typeColor(type: string): string {
   switch (type) {
     case "code":
-      return "text-blue-400 bg-blue-400/10 border-blue-400/30";
+      return "text-blue-500 bg-blue-500/10 border-blue-500/30";
     case "law":
-      return "text-emerald-400 bg-emerald-400/10 border-emerald-400/30";
+      return "text-emerald-500 bg-emerald-500/10 border-emerald-500/30";
     case "decree":
       return "text-violet-400 bg-violet-400/10 border-violet-400/30";
     case "resolution":
-      return "text-gray-400 bg-gray-400/10 border-gray-400/30";
+      return "text-slate-400 bg-slate-400/10 border-slate-400/30";
     case "order":
-      return "text-orange-400 bg-orange-400/10 border-orange-400/30";
+      return "text-amber-500 bg-amber-500/10 border-amber-500/30";
     case "contradiction":
-      return "text-red-400 bg-red-400/10 border-red-400/30";
+      return "text-[#1E3A8A] bg-[#1E3A8A]/10 border-[#1E3A8A]/30";
     case "duplication":
-      return "text-amber-400 bg-amber-400/10 border-amber-400/30";
+      return "text-amber-600 bg-amber-600/10 border-amber-600/30";
     case "outdated":
-      return "text-gray-400 bg-gray-400/10 border-gray-400/30";
+      return "text-slate-500 bg-slate-500/10 border-slate-500/30";
     default:
       return "text-muted-foreground bg-muted";
   }
@@ -70,7 +70,7 @@ export function typeLabel(type: string): string {
 
 /** Форматирование ISO-даты в русский формат. */
 export function formatDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "--";
   try {
     return new Date(iso).toLocaleDateString("ru-RU", {
       year: "numeric",
@@ -82,7 +82,7 @@ export function formatDate(iso: string | null): string {
   }
 }
 
-/** Форматирование confidence float → "85%". */
+/** Форматирование confidence float -> "85%". */
 export function confidencePercent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }

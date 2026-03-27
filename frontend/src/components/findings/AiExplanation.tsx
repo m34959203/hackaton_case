@@ -16,50 +16,54 @@ export default function AiExplanation({
   confidence,
 }: AiExplanationProps) {
   const confPct = Math.round(confidence * 100);
-  const barColor =
+
+  /* Gradient confidence bar: red -> amber -> green */
+  const barGradient =
     confidence >= 0.8
-      ? "bg-emerald-500"
+      ? "bg-gradient-to-r from-emerald-600 to-emerald-400"
       : confidence >= 0.5
-        ? "bg-amber-500"
-        : "bg-red-500";
+        ? "bg-gradient-to-r from-amber-600 to-amber-400"
+        : "bg-gradient-to-r from-red-600 to-red-400";
+
   const textColor =
     confidence >= 0.8
-      ? "text-emerald-400"
+      ? "text-emerald-500"
       : confidence >= 0.5
-        ? "text-amber-400"
-        : "text-red-400";
+        ? "text-amber-500"
+        : "text-red-500";
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <BrainCircuit className="size-5 text-violet-400" />
-          <CardTitle className="text-sm font-medium">
+    <Card className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-black/5">
+      {/* Navy header */}
+      <CardHeader className="bg-gradient-to-r from-[#1E3A8A] to-[#1E40AF] pb-3 pt-4">
+        <div className="flex items-center gap-2.5">
+          <BrainCircuit className="size-5 text-white/80" />
+          <CardTitle className="text-sm font-medium text-white">
             Объяснение ИИ
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-5">
         {/* Прогресс-бар уверенности */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground uppercase">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Уверенность модели
             </span>
-            <span className={`text-sm font-bold ${textColor}`}>
+            <span className={`text-sm font-bold tabular-nums ${textColor}`}>
               {confidencePercent(confidence)}
             </span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className={`h-full rounded-full ${barColor} transition-all duration-700`}
+              className={`h-full rounded-full ${barGradient} transition-all duration-700`}
               style={{ width: `${confPct}%` }}
             />
           </div>
         </div>
 
         <div>
-          <h4 className="mb-1 text-xs font-medium text-muted-foreground uppercase">
+          <h4 className="mb-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Анализ
           </h4>
           <p className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -68,8 +72,8 @@ export default function AiExplanation({
         </div>
 
         {recommendation && (
-          <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
-            <h4 className="mb-1 text-xs font-medium text-violet-400 uppercase">
+          <div className="rounded-lg border border-[#1E3A8A]/20 bg-[#1E3A8A]/5 p-4">
+            <h4 className="mb-1.5 text-xs font-medium text-blue-500 uppercase tracking-wider">
               Рекомендация
             </h4>
             <p className="whitespace-pre-wrap text-sm leading-relaxed">
@@ -78,8 +82,8 @@ export default function AiExplanation({
           </div>
         )}
 
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3">
-          <p className="text-xs text-amber-400">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+          <p className="text-xs text-amber-500">
             Анализ выполнен ИИ и требует верификации юристом. Результаты
             носят рекомендательный характер.
           </p>

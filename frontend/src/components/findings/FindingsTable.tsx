@@ -26,7 +26,7 @@ export default function FindingsTable({ findings, isLoading }: FindingsTableProp
     return (
       <div className="space-y-2">
         {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
+          <Skeleton key={i} className="h-12 w-full bg-[#1E3A8A]/5" />
         ))}
       </div>
     );
@@ -43,20 +43,22 @@ export default function FindingsTable({ findings, isLoading }: FindingsTableProp
   return (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Тип</TableHead>
-          <TableHead>Серьёзность</TableHead>
-          <TableHead>Уверенность</TableHead>
-          <TableHead>Документ A</TableHead>
-          <TableHead>Документ B</TableHead>
-          <TableHead>Тема кластера</TableHead>
+        <TableRow className="border-b-2 border-[#1E3A8A]/20">
+          <TableHead className="font-semibold">Тип</TableHead>
+          <TableHead className="font-semibold">Серьёзность</TableHead>
+          <TableHead className="font-semibold">Уверенность</TableHead>
+          <TableHead className="font-semibold">Документ A</TableHead>
+          <TableHead className="font-semibold">Документ B</TableHead>
+          <TableHead className="font-semibold">Тема кластера</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {findings.map((f) => (
+        {findings.map((f, index) => (
           <TableRow
             key={f.id}
-            className="cursor-pointer"
+            className={`cursor-pointer transition-all duration-150 hover:bg-[#1E3A8A]/5 ${
+              index % 2 === 0 ? "bg-transparent" : "bg-muted/30"
+            }`}
             onClick={() => router.push(`/findings/${f.id}`)}
           >
             <TableCell>
@@ -67,7 +69,7 @@ export default function FindingsTable({ findings, isLoading }: FindingsTableProp
                 {typeLabel(f.severity)}
               </Badge>
             </TableCell>
-            <TableCell className="font-mono text-xs">
+            <TableCell className="font-mono text-xs tabular-nums">
               {confidencePercent(f.confidence)}
             </TableCell>
             <TableCell className="max-w-[200px] truncate text-xs">

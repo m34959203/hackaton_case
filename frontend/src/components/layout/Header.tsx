@@ -42,22 +42,22 @@ export default function Header() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background px-6">
+    <header className="flex h-16 items-center justify-between border-b border-border/50 bg-background/80 backdrop-blur-sm px-6">
       <div>
-        <h2 className="text-lg font-semibold">{title}</h2>
+        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
         <nav className="flex items-center gap-1 text-xs text-muted-foreground">
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1">
-              {i > 0 && <span>/</span>}
+              {i > 0 && <span className="text-border">/</span>}
               <span>{crumb}</span>
             </span>
           ))}
         </nav>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <ModelSelector />
-        <span className="hidden sm:inline">Decentrathon 5.0</span>
+        <span className="hidden sm:inline text-xs text-muted-foreground/60">Decentrathon 5.0</span>
       </div>
     </header>
   );
