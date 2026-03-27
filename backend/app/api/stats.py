@@ -1,9 +1,9 @@
-"""Эндпоинты статистики и проверки здоровья системы."""
+"""Эндпоинты статистики, моделей и проверки здоровья системы."""
 
 import logging
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.config import settings
@@ -64,6 +64,30 @@ class HealthResponse(BaseModel):
 
     status: str
     services: list[ServiceStatus]
+
+
+class ModelProvider(BaseModel):
+    """Информация о провайдере LLM."""
+
+    id: str
+    name: str
+    models: list[str]
+    configured: bool
+
+
+class ModelsInfoResponse(BaseModel):
+    """Информация о текущем провайдере и доступных моделях."""
+
+    current_provider: str
+    current_model: str
+    providers: list[ModelProvider]
+
+
+class SetModelRequest(BaseModel):
+    """Запрос на смену провайдера/модели."""
+
+    provider: str
+    model: str | None = None
 
 
 # --- Эндпоинты ---
@@ -132,6 +156,141 @@ async def get_stats() -> StatsResponse:
         findings_by_severity=findings_by_severity,
         top_domains=top_domains,
     )
+
+
+@router.get("/models", response_model=ModelsInfoResponse)
+async def list_models() -> ModelsInfoResponse:
+    """Список доступных LLM-провайдеров и моделей."""
+
+    # Текущий провайдер и модель
+    provider = settings.LLM_PROVIDER
+    if provider == "openai":
+        current_model = settings.OPENAI_MODEL
+    elif provider == "anthropic":
+        current_model = settings.ANTHROPIC_MODEL
+    elif provider == "gemini":
+        current_model = settings.GEMINI_MODEL
+    else:
+        current_model = settings.OLLAMA_MODEL
+
+    # --- Ollama ---
+    ollama_models: list[str] = []
+    ollama_configured = True
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            resp = await client.get(f"{settings.OLLAMA_URL}/api/tags")
+            data = resp.json()
+            ollama_models = [
+                m["name"]
+                for m in data.get("models", [])
+                if "embed" not in m["name"]
+            ]
+    except Exception:
+        ollama_configured = False
+        ollama_models = [settings.OLLAMA_MODEL]
+
+    # --- OpenAI-совместимый API ---
+    openai_configured = bool(settings.OPENAI_API_KEY)
+    openai_models = [settings.OPENAI_MODEL]
+
+    # --- Anthropic ---
+    anthropic_configured = bool(settings.ANTHROPIC_API_KEY)
+    anthropic_models = [settings.ANTHROPIC_MODEL]
+
+    # --- Google Gemini ---
+    gemini_configured = bool(settings.GEMINI_API_KEY)
+    gemini_models = [settings.GEMINI_MODEL, "gemini-2.5-flash-preview-05-20", "gemini-2.5-pro-preview-06-05"]
+
+    providers = [
+        ModelProvider(
+            id="ollama",
+            name="Ollama (локальный)",
+            models=ollama_models,
+            configured=ollama_configured,
+        ),
+        ModelProvider(
+            id="openai",
+            name="OpenAI API (Together.ai / Groq / OpenRouter)",
+            models=openai_models,
+            configured=openai_configured,
+        ),
+        ModelProvider(
+            id="anthropic",
+            name="Anthropic (Claude)",
+            models=anthropic_models,
+            configured=anthropic_configured,
+        ),
+        ModelProvider(
+            id="gemini",
+            name="Google Gemini",
+            models=gemini_models,
+            configured=gemini_configured,
+        ),
+    ]
+
+    return ModelsInfoResponse(
+        current_provider=provider,
+        current_model=current_model,
+        providers=providers,
+    )
+
+
+@router.post("/models")
+async def set_model(body: SetModelRequest) -> dict:
+    """Сменить LLM-провайдер и/или модель для анализа."""
+    provider = body.provider
+    model = body.model
+
+    if provider not in ("ollama", "openai", "anthropic", "gemini"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Неизвестный провайдер: {provider}. Допустимые: ollama, openai, anthropic, gemini",
+        )
+
+    # Проверка наличия API-ключа для облачных провайдеров
+    if provider == "openai" and not settings.OPENAI_API_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="API-ключ для OpenAI не настроен (ZAN_OPENAI_API_KEY)",
+        )
+    if provider == "anthropic" and not settings.ANTHROPIC_API_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="API-ключ для Anthropic не настроен (ZAN_ANTHROPIC_API_KEY)",
+        )
+    if provider == "gemini" and not settings.GEMINI_API_KEY:
+        raise HTTPException(
+            status_code=400,
+            detail="API-ключ для Gemini не настроен (ZAN_GEMINI_API_KEY)",
+        )
+
+    # Переключаем провайдер
+    settings.LLM_PROVIDER = provider
+
+    # Обновляем модель если указана
+    if model:
+        if provider == "ollama":
+            settings.OLLAMA_MODEL = model
+        elif provider == "openai":
+            settings.OPENAI_MODEL = model
+        elif provider == "anthropic":
+            settings.ANTHROPIC_MODEL = model
+        elif provider == "gemini":
+            settings.GEMINI_MODEL = model
+
+    # Определяем текущую модель для ответа
+    if provider == "openai":
+        current_model = settings.OPENAI_MODEL
+    elif provider == "anthropic":
+        current_model = settings.ANTHROPIC_MODEL
+    elif provider == "gemini":
+        current_model = settings.GEMINI_MODEL
+    else:
+        current_model = settings.OLLAMA_MODEL
+
+    logger.info("LLM переключён: provider=%s, model=%s", provider, current_model)
+
+    return {"status": "ok", "provider": provider, "model": current_model}
 
 
 @router.get("/health", response_model=HealthResponse)

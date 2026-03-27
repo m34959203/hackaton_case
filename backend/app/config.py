@@ -6,10 +6,26 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     """Настройки приложения. Значения можно переопределить через переменные окружения."""
 
-    # Ollama
+    # LLM-провайдер: "ollama" | "openai" | "anthropic" | "gemini"
+    LLM_PROVIDER: str = "ollama"
+
+    # Ollama (локальный)
     OLLAMA_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "qwen2.5:14b"
     OLLAMA_EMBED_MODEL: str = "nomic-embed-text"
+
+    # OpenAI-совместимый API (Together.ai, Groq, OpenRouter и др.)
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.together.xyz/v1"
+    OPENAI_MODEL: str = "meta-llama/Llama-3.1-70B-Instruct-Turbo"
+
+    # Anthropic API (Claude)
+    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = "claude-sonnet-4-20250514"
+
+    # Google Gemini API
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
     # Хранилища (относительно backend/)
     DB_PATH: str = "data/zandb.sqlite"

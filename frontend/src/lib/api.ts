@@ -9,6 +9,7 @@ import type {
   FindingDetail,
   GraphData,
   HealthResponse,
+  ModelsResponse,
   Norm,
   PaginatedResponse,
   StatsResponse,
@@ -43,6 +44,22 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   const json: unknown = await response.json();
   return json as T;
+}
+
+/* ───────── Модели / провайдеры ───────── */
+
+export function getModels(): Promise<ModelsResponse> {
+  return apiFetch<ModelsResponse>("/api/models");
+}
+
+export function setModel(
+  provider: string,
+  model: string,
+): Promise<{ status: string; provider: string; model: string }> {
+  return apiFetch("/api/models", {
+    method: "POST",
+    body: JSON.stringify({ provider, model }),
+  });
 }
 
 /* ───────── Статистика ───────── */

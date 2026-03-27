@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import ModelSelector from "@/components/layout/ModelSelector";
 
 /** Сопоставление путей и заголовков страниц. */
 function getPageTitle(pathname: string): string {
@@ -54,9 +55,9 @@ export default function Header() {
         </nav>
       </div>
 
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <ModelSelector />
         <span className="hidden sm:inline">Decentrathon 5.0</span>
-        <span className="h-2 w-2 rounded-full bg-emerald-500" title="Система активна" />
       </div>
     </header>
   );

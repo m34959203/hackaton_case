@@ -195,6 +195,27 @@ export interface AnalysisErrorData {
   message: string;
 }
 
+/* ───────── Модели и провайдеры ───────── */
+
+export interface ModelProvider {
+  id: string;
+  name: string;
+  models: string[];
+  configured: boolean;
+}
+
+export interface ModelsResponse {
+  current_provider: string;
+  current_model: string;
+  providers: ModelProvider[];
+}
+
+/** @deprecated Старый формат — используйте ModelsResponse */
+export interface ModelsResponseLegacy {
+  current: string;
+  available: { name: string; size_gb: number }[];
+}
+
 /** Legacy aliases for backward compatibility. */
 export interface AnalysisProgressData {
   step: string;
